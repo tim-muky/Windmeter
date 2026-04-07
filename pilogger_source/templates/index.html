@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+<title>PiLogger Web-Monitor</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel=preload href="/static/w3_pilo.css" as="style"/>
+<link rel=preload href="/static/iconset.png" as="image"/>
+<link href="/static/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon"/>
+<link href="/static/w3_pilo.css" rel="stylesheet"/>
+
+<body class="w3-border-blue-grey">
+	<!-- Top container -->
+	<div class="w3-bar w3-top w3-indigo w3-large" style="z-index:4">
+		<button class="w3-bar-item w3-button w3-hide-large w3-hover-none w3-hover-text-light-grey" onclick="sb_open()">
+			<i class="Icon_Menu_wh" style="height:26px;width:26px"></i> Menu</button>
+		<span class="w3-bar-item">PiLogger</span>
+		<span class="w3-bar-item w3-right"><i class="Icon_Logo" class="w3-margin-right" style="height:26px;width:33px"></i></span>
+	</div>
+	<!-- Sidebar/menu -->
+	<nav class="w3-sidebar w3-collapse w3-pale-blue w3-animate-left" style="z-index:3;width:180px;" id="mySidebar">
+		<div class="w3-container">
+			<h5>Menu</h5>
+		</div>
+		<div class="w3-bar-block">
+			<a href="#" class="w3-bar-item w3-button w3-padding-16 w3-hide-large w3-dark-grey w3-hover-black" onclick="sb_close()" title="close menu"><i class="Icon_Close_wh" style="height:26px;width:26px"></i> Close Menu</a>
+			<a href="/" class="w3-bar-item w3-button w3-blue"><i class="Icon_Live_bl" style="height:26px;width:32px"></i> Live Werte</a>
+			<a href="/static/livechart.html" class="w3-bar-item w3-button"><i class="Icon_ChartL_bl" style="height:26px;width:32px"></i> Live Kurve</a>
+			<a href="/static/diagramme.html" class="w3-bar-item w3-button"><i class="Icon_Chart_bl" style="height:26px;width:32px"></i> Diagramme</a>
+			<a href="/static/einstell1.html" class="w3-bar-item w3-button"><i class="Icon_Einstell_bl" style="height:26px;width:32px"></i> Einstellungen 1</a>
+			<a href="/static/einstell2.html" class="w3-bar-item w3-button"><i class="Icon_Wrench_bl" style="height:26px;width:32px"></i> Einstellungen 2</a>
+			<a href="/static/kalibration.html" class="w3-bar-item w3-button"><i class="Icon_Waage_bl" style="height:26px;width:32px"></i> Kalibration</a>
+			<a href="/static/download.html" class="w3-bar-item w3-button"><i class="Icon_Download_bl" style="height:26px;width:32px"></i> Download</a>
+		</div>
+	</nav>
+	<!-- Overlay effect when opening sidebar on small screens -->
+	<div class="w3-overlay w3-hide-large w3-animate-opacity" onclick="sb_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
+	<!-- !PAGE CONTENT! -->
+	<div class="w3-main" style="margin-left:185px;margin-top:45px;">
+		<div class="w3-margin-left" id="PiLoTime"></div>
+		<div class="w3-row-padding w3-margin-bottom">
+			<div class="w3-quarter">
+				<div id="Feld01" class="w3-container w3-padding-small">
+					<div class="w3-left"><i class="Icon_Temp_bl" style="height:36px;width:48px"></i></div>
+					<div class="w3-right"><h6><span id="PiLoTemp2"></h6></div>
+					<div class="w3-clear"></div>
+					<div class="w3-right"><h2><span id="PiLoTemp1"></h2></div>
+					<a href="/static/diagramme.html?show=temp" class="w3-clear"></a>
+					<div class="w3-right"><h4>&nbsp;<br>&nbsp;</h4></div>
+					<div class="w3-right">
+						<button id="Farbknopf01" class="w3-transparent" onClick="Farbenwahl('Farbe01')">
+							<i class="Icon_Einstell_bl" style="height:20px;width:22px"></i>
+						</button>
+					</div>
+					<div class="w3-center"><h4>Temperatur</h4></div>
+				</div>
+			</div>
+			<div class="w3-quarter">
+				<div id="Feld02" class="w3-container w3-padding-small">
+					<div class="w3-left"><i class="Icon_Windrad_bl" style="height:34px;width:45px"></i></div>
+					<div class="w3-right"><h6><span id="PiLoWind2"></h6></div>
+					<div class="w3-clear"></div>
+					<div class="w3-right"><h2><span id="PiLoWind1"></h2></div>
+					<a href="/static/diagramme.html?show=wind" class="w3-clear"></a>
+					<div class="w3-right"><h4>&nbsp;<br>&nbsp;</h4></div>
+					<div class="w3-right">
+						<button id="Farbknopf02" class="w3-transparent" onClick="Farbenwahl('Farbe02')">
+							<i class="Icon_Einstell_bl" style="height:20px;width:22px"></i>
+						</button>
+					</div>
+					<div class="w3-center"><h4>Wind</h4></div>
+				</div>
+			</div>
+			<div class="w3-quarter">
+				<div id="Feld03" class="w3-container w3-padding-small">
+					<div class="w3-left"><i class="Icon_Windrad_bl" style="height:34px;width:45px"></i></div>
+					<div class="w3-right" style="line-height:1.25"><h6>
+						<li class="w3-ul"><span id="PiLoWind10m"></span><h7>:10m</h7></li>
+						<li class="w3-ul"><span id="PiLoWind1h"></span><h7>: 1h</h7></li>
+						<li class="w3-ul"><span id="PiLoWind1d"></span><h7>: 1d</h7></li>
+						<li class="w3-ul"><span id="PiLoWind1y"></span><h7>: 1y</h7></li></h6></div>
+					<a href="/static/diagramme.html?show=windavg" class="w3-clear"></a>
+					<div class="w3-right"><h4>&nbsp;<br>&nbsp;</h4></div>
+					<div class="w3-right">
+						<button id="Farbknopf02" class="w3-transparent" onClick="Farbenwahl('Farbe03')">
+							<i class="Icon_Einstell_bl" style="height:20px;width:22px"></i>
+						</button>
+					</div>
+					<div class="w3-center"><h4>Wind Mittel</h4></div>
+				</div>
+			</div>
+			<div class="w3-quarter">
+				<div id="Feld04" class="w3-container w3-padding-small">
+					<div class="w3-left"><i class="Icon_Leistung_bl" style="height:36px;width:48px"></i></div>
+					<div class="w3-right"><h6>&nbsp;</h6></div>
+					<div class="w3-clear"></div>
+					<div class="w3-right"><h2><span id="PiLoWatt"></h2></div>
+					<a href="/static/diagramme.html?show=watt" class="w3-clear"></a>
+					<div class="w3-right"><h4>&nbsp;<br>&nbsp;</h4></div>
+					<div class="w3-right">
+						<button id="Farbknopf05" class="w3-transparent" onClick="Farbenwahl('Farbe04')">
+							<i class="Icon_Einstell_bl" style="height:20px;width:22px"></i>
+						</button>
+					</div>
+					<div class="w3-center"><h4>Leistung</h4></div>
+				</div>
+			</div>
+			<div class="w3-quarter">
+				<div id="Feld05" class="w3-container w3-padding-small">
+					<div class="w3-left"><i class="Icon_Volt_bl" style="height:36px;width:48px"></i></div>
+					<div class="w3-right"><h6>&nbsp;</h6></div>
+					<div class="w3-clear"></div>
+					<div class="w3-right"><h2><span id="PiLoVolt"></h2></div>
+					<a href="/static/diagramme.html?show=volt" class="w3-clear"></a>
+					<div class="w3-right"><h4>&nbsp;<br>&nbsp;</h4></div>
+					<div class="w3-right">
+						<button id="Farbknopf03" class="w3-transparent" onClick="Farbenwahl('Farbe05')">
+							<i class="Icon_Einstell_bl" style="height:20px;width:22px"></i>
+						</button>
+					</div>
+					<div class="w3-center"><h4>Spannung</h4></div>
+				</div>
+			</div>
+			<div class="w3-quarter">
+				<div id="Feld06" class="w3-container w3-padding-small">
+					<div class="w3-left"><i class="Icon_Ertrag_bl" style="height:36px;width:48px"></i></div>
+					<div class="w3-right"><h6><span id="TgEnTiE"></h6></div>
+					<div class="w3-clear"></div>
+					<div class="w3-right"><h2><span id="TgEnerE"></h2></div>
+					<a href="/static/diagramme.html?show=enerday" class="w3-clear"></a>
+					<div class="w3-right"><h4>&nbsp;<br>&nbsp;</h4></div>
+					<div class="w3-right">
+						<button id="Farbknopf06" class="w3-transparent" onClick="Farbenwahl('Farbe06')">
+							<i class="Icon_Einstell_bl" style="height:20px;width:22px"></i>
+						</button>
+					</div>
+					<div class="w3-center"><h4>Tages-Ertrag</h4></div>
+				</div>
+			</div>
+			<div class="w3-quarter">
+				<div id="Feld07" class="w3-container w3-padding-small">
+					<div class="w3-left"><i class="Icon_Verbrauch_bl" style="height:36px;width:48px"></i></div>
+					<div class="w3-right"><h6><span id="TgEnTiV"></h6></div>
+					<div class="w3-clear"></div>
+					<div class="w3-right"><h2><span id="TgEnerV"></h2></div>
+					<a href="/static/diagramme.html?show=enerday" class="w3-clear"></a>
+					<div class="w3-right"><h4>&nbsp;<br>&nbsp;</h4></div>
+					<div class="w3-right">
+						<button id="Farbknopf07" class="w3-transparent" onClick="Farbenwahl('Farbe07')">
+							<i class="Icon_Einstell_bl" style="height:20px;width:22px"></i>
+						</button>
+					</div>
+					<div class="w3-center"><h4>Tages-Verbrauch</h4></div>
+				</div>
+			</div>
+			<div class="w3-quarter">
+				<div id="Feld08" class="w3-container w3-padding-small">
+					<div class="w3-left"><i class="Icon_Energie_bl" style="height:36px;width:48px"></i></div>
+					<div class="w3-right"><h6><span id="TgEnTi"></h6></div>
+					<div class="w3-clear"></div>
+					<div class="w3-right"><h2><span id="TgEner"></h2></div>
+					<a href="/static/diagramme.html?show=enerday" class="w3-clear"></a>
+					<div class="w3-right"><h4>&nbsp;<br>&nbsp;</h4></div>
+					<div class="w3-right">
+						<button id="Farbknopf08" class="w3-transparent" onClick="Farbenwahl('Farbe08')">
+							<i class="Icon_Einstell_bl" style="height:20px;width:22px"></i>
+						</button>
+					</div>
+					<div class="w3-center"><h4>Tages-Bilanz</h4></div>
+				</div>
+			</div>
+			<div class="w3-quarter">
+				<div id="Feld09" class="w3-container w3-padding-small">
+					<div class="w3-left"><i class="Icon_Strom_bl" style="height:36px;width:48px"></i></div>
+					<div class="w3-right"><h6>&nbsp;</h6></div>
+					<div class="w3-clear"></div>
+					<div class="w3-right"><h2><span id="PiLoAmps"></h2></div>
+					<a href="/static/diagramme.html?show=amps" class="w3-clear"></a>
+					<div class="w3-right"><h4>&nbsp;<br>&nbsp;</h4></div>
+					<div class="w3-right">
+						<button id="Farbknopf04" class="w3-transparent" onClick="Farbenwahl('Farbe09')">
+							<i class="Icon_Einstell_bl" style="height:20px;width:22px"></i>
+						</button>
+					</div>
+					<div class="w3-center"><h4>Strom</h4></div>
+				</div>
+			</div>
+			<div class="w3-quarter">
+				<div id="Feld10" class="w3-container w3-padding-small">
+					<div class="w3-left"><i class="Icon_Ertrag_bl" style="height:36px;width:48px"></i></div>
+					<div class="w3-right"><h6><span id="PiLoEnTiE"></h6></div>
+					<div class="w3-clear"></div>
+					<div class="w3-right"><h2><span id="PiLoEnerE"></h2></div>
+					<a href="/static/diagramme.html?show=enerperm" class="w3-clear"></a>
+					<div class="w3-right"><h4>&nbsp;<br>&nbsp;</h4></div>
+					<div class="w3-right">
+						<button id="Farbknopf10" class="w3-transparent" onClick="Farbenwahl('Farbe10')">
+							<i class="Icon_Einstell_bl" style="height:20px;width:22px"></i>
+						</button>
+					</div>
+					<div class="w3-center"><h4>Dauer-Ertrag</h4></div>
+				</div>
+			</div>
+			<div class="w3-quarter">
+				<div id="Feld11" class="w3-container w3-padding-small">
+					<div class="w3-left"><i class="Icon_Verbrauch_bl" style="height:36px;width:48px"></i></div>
+					<div class="w3-right"><h6><span id="PiLoEnTiV"></h6></div>
+					<div class="w3-clear"></div>
+					<div class="w3-right"><h2><span id="PiLoEnerV"></h2></div>
+					<a href="/static/diagramme.html?show=enerperm" class="w3-clear"></a>
+					<div class="w3-right"><h4>&nbsp;<br>&nbsp;</h4></div>
+					<div class="w3-right">
+						<button id="Farbknopf11" class="w3-transparent" onClick="Farbenwahl('Farbe11')">
+							<i class="Icon_Einstell_bl" style="height:20px;width:22px"></i>
+						</button>
+					</div>
+					<div class="w3-center"><h4>Dauer-Verbrauch</h4></div>
+				</div>
+			</div>
+			<div class="w3-quarter">
+				<div id="Feld12" class="w3-container w3-padding-small">
+					<div class="w3-left"><i class="Icon_Energie_bl" style="height:36px;width:48px"></i></div>
+					<div class="w3-right"><h6><span id="PiLoEnTi"></h6></div>
+					<div class="w3-clear"></div>
+					<div class="w3-right"><h2><span id="PiLoEner"></h2></div>
+					<a href="/static/diagramme.html?show=enerperm" class="w3-clear"></a>
+					<div class="w3-right"><h4>&nbsp;<br>&nbsp;</h4></div>
+					<div class="w3-right">
+						<button id="Farbknopf12" class="w3-transparent" onClick="Farbenwahl('Farbe12')">
+							<i class="Icon_Einstell_bl" style="height:20px;width:22px"></i>
+						</button>
+					</div>
+					<div class="w3-center"><h4>Dauer-Bilanz</h4></div>
+				</div>
+			</div>
+		</div>
+		<div id="Fehlermeldung" class="w3-modal">
+			<div class="w3-modal-content w3-center w3-padding-24 w3-round-large">
+				<h4><span>Fehlermeldung</span></h4>
+				<div id="Fehlertext" class="w3-left-align w3-margin-left"></div>
+				<div class="w3-panel">
+					<button onclick="Fehlerweg()" class="pL-button w3-red w3-padding">Schließen</button>
+				</div>
+			</div>
+		</div>
+		<div id="Farbauswahl" class="w3-modal">
+			<div class="w3-modal-content w3-center w3-padding-24 w3-round-large">
+				<h4><span>Farbauswahl</span></h4>
+				<div id="Farbtext" class="w3-center"></div>
+				<input type="color" value="#888888" id="color-picker" />
+				<div class="w3-panel">
+					<button onclick="Auswahldefault()" class="pL-button w3-orange w3-padding">Alles zurück</button>
+					<button onclick="Auswahlfertig()" class="pL-button w3-green w3-padding">&nbsp;Fertig&nbsp;</button>
+				</div>
+			</div>
+		</div>
+		<button onclick="topFunction()" id="topBtn" title="Nach oben">&#x25B2;</button> 
+	<!-- End page content -->
+	</div>
+	<script>
+	/**
+	* @license
+	* Copyright 2018, 2024 G.Weiß-Engel (info@pilogger.de)
+	* MIT-licensed (http://opensource.org/licenses/MIT)
+	*/
+	var NewColor;
+	var ActColor;
+	function SetDefaultColor() {
+		localStorage.setItem('Farbe01', '#e0e5ff');
+		localStorage.setItem('Farbe02', '#f0f3ff');
+		localStorage.setItem('Farbe03', '#e0e5ff');
+		localStorage.setItem('Farbe04', '#f0f3ff');
+		localStorage.setItem('Farbe05', '#f7ffa1');
+		localStorage.setItem('Farbe06', '#fcffda');
+		localStorage.setItem('Farbe07', '#f7ffa1');
+		localStorage.setItem('Farbe08', '#fcffda');
+		localStorage.setItem('Farbe09', '#e0e5ff');
+		localStorage.setItem('Farbe10', '#f0f3ff');
+		localStorage.setItem('Farbe11', '#e0e5ff');
+		localStorage.setItem('Farbe12', '#f0f3ff');
+	}
+	function FarbeSetzen() {
+		var Farbe01 = localStorage.getItem('Farbe01');
+		var Farbe02 = localStorage.getItem('Farbe02');
+		var Farbe03 = localStorage.getItem('Farbe03');
+		var Farbe04 = localStorage.getItem('Farbe04');
+		var Farbe05 = localStorage.getItem('Farbe05');
+		var Farbe06 = localStorage.getItem('Farbe06');
+		var Farbe07 = localStorage.getItem('Farbe07');
+		var Farbe08 = localStorage.getItem('Farbe08');
+		var Farbe09 = localStorage.getItem('Farbe09');
+		var Farbe10 = localStorage.getItem('Farbe10');
+		var Farbe11 = localStorage.getItem('Farbe11');
+		var Farbe12 = localStorage.getItem('Farbe12');
+		document.getElementById("Feld01").style.backgroundColor = Farbe01;
+		document.getElementById("Feld02").style.backgroundColor = Farbe02;
+		document.getElementById("Feld03").style.backgroundColor = Farbe03;
+		document.getElementById("Feld04").style.backgroundColor = Farbe04;
+		document.getElementById("Feld05").style.backgroundColor = Farbe05;
+		document.getElementById("Feld06").style.backgroundColor = Farbe06;
+		document.getElementById("Feld07").style.backgroundColor = Farbe07;
+		document.getElementById("Feld08").style.backgroundColor = Farbe08;
+		document.getElementById("Feld09").style.backgroundColor = Farbe09;
+		document.getElementById("Feld10").style.backgroundColor = Farbe10;
+		document.getElementById("Feld11").style.backgroundColor = Farbe11;
+		document.getElementById("Feld12").style.backgroundColor = Farbe12;
+	}
+	function getNewColor() {
+		NewColor = event.target.value;
+		localStorage.setItem(ActColor, NewColor);
+		FarbeSetzen();
+	}
+	function Auswahldefault() {
+		SetDefaultColor();
+		FarbeSetzen();
+	}
+	if(!localStorage.getItem('Farbe01')) {SetDefaultColor()};
+	FarbeSetzen();
+	var mySidebar = document.getElementById("mySidebar");
+	var overlayBg = document.getElementById("myOverlay");
+	function sb_open() {
+		if (mySidebar.style.display === 'block') {
+			mySidebar.style.display = 'none';
+			overlayBg.style.display = "none";
+		} else {
+			mySidebar.style.display = 'block';
+			overlayBg.style.display = "block";
+		}
+	}
+	function sb_close() {
+		mySidebar.style.display = "none";
+		overlayBg.style.display = "none";
+	}
+	var fModal = document.getElementById("Fehlermeldung");
+	function Zeigefehler(text) {
+		document.getElementById("Fehlertext").innerHTML = text.replace(/;/g,"<br>");
+		fModal.style.display = "block";
+	}
+	function Fehlerweg() {
+		fModal.style.display = "none";
+	}
+	var FarbModal = document.getElementById("Farbauswahl");
+	function Farbenwahl(text) {
+		document.getElementById("Farbtext").innerHTML = "für " + text + " - hier klicken :";
+		ActColor = text;
+		colorPicker.value = localStorage.getItem(ActColor);
+		FarbModal.style.display = "block";
+	}
+	function Auswahlfertig() {
+		FarbModal.style.display = "none";
+	}
+	function requestData() {
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET","/data/", true);
+		xhr.onreadystatechange = function () {
+			if (xhr.readyState === 4) {
+				if (xhr.status === 200) {
+					var res = JSON.parse(xhr.responseText);
+					for (id in res) {
+						if (document.getElementById(id) !== null) {
+							document.getElementById(id).innerHTML = res[id];
+						};
+						if (id == "Fehler") {
+							if (res[id] != "") {
+								Zeigefehler(res[id]);
+							};
+						};
+					};
+				} else {
+					console.error(xhr.statusText);
+					console.log("Error processing requestData");
+					clearTimeout(autorequestTimer);
+				}
+			}
+		};
+		xhr.send();
+	}
+	window.onscroll = function() {scrollFunction()};
+	function scrollFunction() {
+		if (document.body.scrollTop > 150 || document.documentElement.scrollTop > 150) {
+			document.getElementById("topBtn").style.display = "block";
+		} else {
+			document.getElementById("topBtn").style.display = "none";
+		}
+	}
+	function topFunction() {
+		document.body.scrollTop = 0; // For Safari
+		document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
+	}
+	window.onload = function() {
+		requestData();
+		colorPicker = document.querySelector("#color-picker");
+		colorPicker.addEventListener("input", getNewColor, false);
+	}
+	intervalID = window.setInterval(requestData,2000);
+	</script>
+</body>
+</html>

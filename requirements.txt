@@ -1,0 +1,23 @@
+# SailMon Python dependencies
+# Install with: pip install -r requirements.txt
+# (The setup_system.sh script does this automatically in a venv)
+
+# ── Web framework ──────────────────────────────────────────────────────────────
+fastapi>=0.111.0
+uvicorn[standard]>=0.29.0
+websockets>=12.0
+
+# ── Async HTTP (for PiLogger polling + tile proxy) ─────────────────────────────
+aiohttp>=3.9.0
+aiofiles>=23.2.0
+
+# ── Hardware / Serial ──────────────────────────────────────────────────────────
+# pyserial: USB serial communication with the Raspberry Pi PICO display controller
+pyserial>=3.5
+
+# RPi.GPIO is installed via apt (python3-rpi.gpio) for system-site-packages
+# No extra pip install needed on the Pi.
+
+# ── GPS ────────────────────────────────────────────────────────────────────────
+# gps (gpsd Python bindings) installed via apt: python3-gps
+# No extra pip install needed.

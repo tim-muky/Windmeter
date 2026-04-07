@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>SailMon</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- Hand-drawn display font (loads when online; Impact fallback works offline) -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" />
+  <!-- App CSS -->
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <!-- ── Header bar ──────────────────────────────────────────────────────── -->
+  <header class="topbar">
+    <div class="header-half" id="hdr-wind">
+      <span class="hdr-label">WINDSPEED</span>
+      <span class="hdr-value"><span id="wind-speed">--.-</span>kn.</span>
+      <span class="hdr-trend" id="wind-trend">→</span>
+    </div>
+    <div class="header-divider"></div>
+    <div class="header-half" id="hdr-speed">
+      <span class="hdr-label">BOATSPEED</span>
+      <span class="hdr-value"><span id="boat-speed">--.-</span>kn.</span>
+      <span class="hdr-trend" id="speed-trend">→</span>
+    </div>
+    <button class="menu-btn" id="menu-btn" title="Sessions">&#9776;</button>
+  </header>
+
+  <!-- ── Map (full screen below header) ─────────────────────────────────── -->
+  <div id="map"></div>
+
+  <!-- Coordinates display bottom-right (over map) -->
+  <div id="coords" class="coords-display">–</div>
+
+  <!-- ── Right navigation panel (over map) ──────────────────────────────── -->
+  <div class="nav-panel">
+    <button class="nav-btn" id="btn-zoom-in"  title="Zoom in">+</button>
+    <button class="nav-btn" id="btn-zoom-out" title="Zoom out">−</button>
+    <div class="nav-cross">
+      <button class="nav-btn cross-up"    id="btn-pan-up"    title="Pan up">&#9650;</button>
+      <div class="cross-mid">
+        <button class="nav-btn cross-left"  id="btn-pan-left"  title="Pan left">&#9664;</button>
+        <button class="nav-btn cross-dot"   id="btn-pan-reset" title="Centre map">&#9679;</button>
+        <button class="nav-btn cross-right" id="btn-pan-right" title="Pan right">&#9654;</button>
+      </div>
+      <button class="nav-btn cross-down"  id="btn-pan-down"  title="Pan down">&#9660;</button>
+    </div>
+    <button class="nav-btn nav-follow" id="btn-follow" title="Follow boat">&#9654;&#x20DD;</button>
+    <button class="nav-btn" id="btn-north" title="North up">N&#8593;</button>
+  </div>
+
+  <!-- ── Sessions overlay (shown when ≡ is tapped) ──────────────────────── -->
+  <div id="sessions-overlay" class="sessions-overlay hidden">
+    <div class="sessions-panel">
+      <div class="sessions-header">
+        <span class="sessions-title">Sessions</span>
+        <button class="sessions-close" id="sessions-close">&#10005;</button>
+      </div>
+      <ul id="session-list" class="session-list">
+        <li class="session-empty">Keine Sessions vorhanden.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── Trip detail modal ───────────────────────────────────────────────── -->
+  <div id="trip-modal" class="modal hidden">
+    <div class="modal-box">
+      <button class="modal-close" id="modal-close">&#10005;</button>
+      <h3 id="modal-title">Session</h3>
+      <div class="modal-stats">
+        <div class="stat"><div class="stat-val" id="ms-dist">-</div><div class="stat-lab">NM</div></div>
+        <div class="stat"><div class="stat-val" id="ms-wind">-</div><div class="stat-lab">Max Wind kn</div></div>
+        <div class="stat"><div class="stat-val" id="ms-speed">-</div><div class="stat-lab">Max SOG kn</div></div>
+        <div class="stat"><div class="stat-val" id="ms-dur">-</div><div class="stat-lab">Dauer</div></div>
+      </div>
+      <div id="modal-map"></div>
+      <a id="modal-gpx" class="btn-gpx" href="#" download>GPX herunterladen</a>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- App JS -->
+  <script src="/static/app.js"></script>
+</body>
+</html>

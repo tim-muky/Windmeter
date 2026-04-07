@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html>
+<title>PiLogger Einstellungen 1</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="/static/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon"/>
+<link href="/static/w3_pilo.css" rel="stylesheet"/>
+
+<body class="w3-border-amber">
+	<!-- Top container -->
+	<div class="w3-bar w3-top w3-indigo w3-large" style="z-index:4">
+		<button class="w3-bar-item w3-button w3-hide-large w3-hover-none w3-hover-text-light-grey" onclick="sb_open();">
+			<a class="Icon_Menu_wh" style="height:26px;width:26px"></a> Menu</button>
+		<span class="w3-bar-item">PiLogger</span>
+		<span class="w3-bar-item w3-right"><i class="Icon_Logo" class="w3-margin-right" style="height:26px;width:33px"></i></span>
+	</div>
+	<!-- Sidebar/menu -->
+	<nav class="w3-sidebar w3-collapse w3-pale-blue w3-animate-left" style="z-index:3;width:180px;" id="mySidebar">
+		<div class="w3-container">
+			<h5>Menu</h5>
+		</div>
+		<div class="w3-bar-block">
+			<a href="#" class="w3-bar-item w3-button w3-padding-16 w3-hide-large w3-dark-grey w3-hover-black" onclick="sb_close()" title="close menu"><i class="Icon_Close_wh" style="height:26px;width:26px"></i> Close Menu</a>
+			<a href="/" class="w3-bar-item w3-button w3-padding"><i class="Icon_Live_bl" style="height:26px;width:32px"></i> Live Werte</a>
+			<a href="/static/livechart.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_ChartL_bl" style="height:26px;width:32px"></i> Live Kurve</a>
+			<a href="/static/diagramme.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Chart_bl" style="height:26px;width:32px"></i> Diagramme</a>
+			<a href="#" class="w3-bar-item w3-button w3-padding w3-blue"><i class="Icon_Einstell_bl" style="height:26px;width:32px"></i> Einstellungen 1</a>
+			<a href="/static/einstell2.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Wrench_bl" style="height:26px;width:32px"></i> Einstellungen 2</a>
+			<a href="/static/kalibration.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Waage_bl" style="height:26px;width:32px"></i> Kalibration</a>
+			<a href="/static/download.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Download_bl" style="height:26px;width:32px"></i> Download</a>
+		</div>
+	</nav>
+	<!-- Overlay effect when opening sidebar on small screens -->
+	<div class="w3-overlay w3-hide-large w3-animate-opacity" onclick="sb_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
+	<!-- !PAGE CONTENT! -->
+	<div class="w3-main" style="margin-left:185px;margin-top:45px;">
+		<div class="w3-container w3-light-grey">
+			<h4>Einstellungen 1</h4>
+		</div>
+		<div class="w3-table-all" style="font-size:90%"><table>
+			<tr><td><b>PiLogger<br>Einstellungen</b></td><td><br><b>Ist</b></td><td> </td><td><br><b>Soll</b></td><td><br><b>Eingabe</b></td></tr>
+			<tr><td>I²C Adresse</td><td><span id="SlavAddr"></td><td>&emsp;</td><td><span id="nSlavAddr"></td><td>
+				<input id="iSlavAddr" inputmode="decimal" onchange="SetSlavAddr(this.value)" size="3" maxlength="3"></td></tr>
+			<tr><td>Faktor Mittelung</td><td><span id="AvgFactr"></td><td></td><td><span id="nAvgFactr"></td><td>
+				<select onchange="SetAvgFactr(this.value)">
+					<option value=" " selected> </option>
+					<option value="1">2</option>
+					<option value="2">4</option>
+					<option value="3">8</option>
+					<option value="4">16</option>
+					<option value="5">32</option>
+					<option value="6">64</option>
+					<option value="7">128</option></select>
+			</td></tr>
+			<tr><td>Pulszähl Zeitfaktor</td><td><span id="TimPuFac"></td><td> </td><td><span id="nTimPuFac"></td><td>
+				<input id="iTimPuFac" inputmode="decimal" onchange="SetTimPuFac(this.value)" size="3" maxlength="3"></td></tr>
+			<tr><td>Zeitbasis</td><td><span id="TimeBase"></td><td> </td><td><span id="nTimebase"></td><td>
+				<label><select onchange="SetTimeBase(this.value)">
+					<option value=" " selected> </option>
+					<option value="0">1 sec</option>
+					<option value="1">1/4 sec</option>
+					<option value="2">1/64 sec</option>
+					<option value="3">1/512 sec</option></select></label>
+			</td></tr>
+			<tr><td>Intervall Lo Byte</td><td><span id="TimFacLo"></td><td> </td><td><span id="nTimFacLo"></td><td>
+				<input id="iTimFacLo" inputmode="decimal" onchange="SetTimFacLo(this.value)" size="3" maxlength="3"></td></tr>
+			<tr><td>Intervall Hi Byte</td><td><span id="TimFacHi"></td><td> </td><td><span id="nTimFacHi"></td><td>
+				<input id="iTimFacHi" inputmode="decimal" onchange="SetTimFacHi(this.value)" size="3" maxlength="3"></td></tr>
+			<tr><td><i>ergibt Messintervall</i></td><td><b><span id="MeasInter"></b></td><td></td><td><b><span id="nMeasInter"></b></td><td><--</td></tr>
+			</table>
+		</div>
+		<div class="w3-panel pL-button w3-blue w3-padding" id="Send-button" onClick="send_piloconf()"<a>Senden </a></div>
+		<div class="w3-panel pL-button w3-orange w3-padding" id="Flash-button" onClick="send_flashPiLo()"<a>Speichern </a></div>
+		<div class="w3-panel pL-button w3-yellow w3-padding" id="AmpZero-button" onClick="send_amp_zero()"<a>Amp-Zero </a></div>
+		<div class="w3-panel pL-button w3-teal w3-padding" id="Factdef-button" onClick="send_factorydef()"<a>Werkseinst. </a></div>
+		<div id="Fehlermeldung" class="w3-modal">
+			<div class="w3-modal-content w3-center w3-padding-24 w3-round-large">
+				<h4><span>Fehlermeldung</span></h4>
+				<div id="Fehlertext" class="w3-left-align w3-margin-left"></div>
+				<div class="w3-panel">
+					<button onclick="Fehlerweg()" class="pL-button w3-red w3-padding">Schließen</button>
+				</div>
+			</div>
+		</div>
+	<!-- End page content -->
+	</div>
+	<script>
+	/**
+	* @license
+	* Copyright 2018, 2024 G.Weiß-Engel (info@pilogger.de)
+	* MIT-licensed (http://opensource.org/licenses/MIT)
+	*/
+	var mySidebar = document.getElementById("mySidebar");
+	var overlayBg = document.getElementById("myOverlay");
+	function sb_open() {
+		if (mySidebar.style.display === 'block') {
+			mySidebar.style.display = 'none';
+			overlayBg.style.display = "none";
+		} else {
+			mySidebar.style.display = 'block';
+			overlayBg.style.display = "block";
+		}
+	}
+	function sb_close() {
+		mySidebar.style.display = "none";
+		overlayBg.style.display = "none";
+	}
+	var SetSlAdd,SetTimba,SetTimLo,SetTimHi,SetAvgFa,SetPuFac,MeasInt,nMeasInt;
+	function secText(sec) {
+		if (sec >= 60) {
+			min = parseInt(sec/60);
+			sec = parseFloat(sec - min*60);
+		} else {
+			min = parseInt(0);
+			sec = parseFloat(sec);
+		};
+		if (min >= 60) {
+			std = parseInt(min/60);
+			min = parseInt(min - std*60);
+			out = std.toFixed(0) + 'h ' + min.toFixed(0) + 'm ' + sec + 's';
+		} else {
+			std = parseInt(0);
+			if (min > 0){
+				out = min.toFixed(0) + 'm ' + sec + 's';
+			} else {
+				out = sec + 's';
+			};
+		};
+		return out;
+	}
+	function calcNmeas() {
+		nMeasInt = 256 * SetTimHi + SetTimLo;
+		switch(SetTimba) {
+			case 0:
+				break;
+			case 1:
+				nMeasInt /= 4;
+				break;
+			case 2:
+				nMeasInt /= 64;
+				break;
+			case 3:
+				nMeasInt /= 512;
+		};
+		if (nMeasInt <= 0) {
+			document.getElementById("nMeasInter").style.backgroundColor = "#ff4c4c";
+		}else{
+			document.getElementById("nMeasInter").style.backgroundColor = "";
+		};
+		document.getElementById("nMeasInter").innerHTML = secText(nMeasInt);
+	}
+	var fModal = document.getElementById("Fehlermeldung");
+	function Zeigefehler(text) {
+		document.getElementById("Fehlertext").innerHTML = text.replace(/;/g,"<br>");
+		fModal.style.display = "block";
+	};
+	function Fehlerweg() {
+		fModal.style.display = "none";
+	};
+	var TimeBaseText=["1 sec","1/4 sec","1/64 sec","1/512 sec"];
+	function get_pilo_conf() {
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET","/getpiloconf/", true);
+		xhr.onreadystatechange = function () {
+			if (xhr.readyState === 4) {
+				if (xhr.status === 200) {
+					var res = JSON.parse(xhr.responseText);
+					for (id in res) {
+						if (id == "SlavAddr") {
+							SetSlAdd = parseInt(res[id]);
+							document.getElementById("SlavAddr").innerHTML = SetSlAdd;
+							document.getElementById("nSlavAddr").innerHTML = SetSlAdd;
+						};
+						if (id == "TimeBase") {
+							SetTimba = parseInt(res[id]);
+							TimbaText = TimeBaseText[SetTimba];
+							document.getElementById("TimeBase").innerHTML = TimbaText;
+							document.getElementById("nTimebase").innerHTML = TimbaText;
+						};
+						if (id == "TimFacLo") {
+							SetTimLo = parseInt(res[id]);
+							document.getElementById("TimFacLo").innerHTML = SetTimLo;
+							document.getElementById("nTimFacLo").innerHTML = SetTimLo;
+						};
+						if (id == "TimFacHi") {
+							SetTimHi = parseInt(res[id]);
+							document.getElementById("TimFacHi").innerHTML = SetTimHi;
+							document.getElementById("nTimFacHi").innerHTML = SetTimHi;
+						};
+						if (id == "AvgFactr") {
+							SetAvgFa = parseInt(res[id]);
+							document.getElementById("AvgFactr").innerHTML = Math.pow(2,SetAvgFa);
+							document.getElementById("nAvgFactr").innerHTML = Math.pow(2,SetAvgFa);
+						};
+						if (id == "TimPuFac") {
+							SetPuFac = parseInt(res[id]);
+							document.getElementById("TimPuFac").innerHTML = SetPuFac;
+							document.getElementById("nTimPuFac").innerHTML = SetPuFac;
+						};
+						if (id == "Fehler") {
+							if (res[id] != "") {
+								Zeigefehler(res[id]);
+							};
+						};
+					};
+					MeasInt = 256 * SetTimHi + SetTimLo;
+					switch(SetTimba) {
+						case 0:
+							break;
+						case 1:
+							MeasInt /= 4;
+							break;
+						case 2:
+							MeasInt /= 64;
+							break;
+						case 3:
+							MeasInt /= 512;
+					};
+					document.getElementById("MeasInter").innerHTML = secText(MeasInt);
+					calcNmeas();
+				} else {
+					console.error(xhr.statusText);
+					console.log("Error processing getpiloconf");
+				}
+			}
+		};
+		xhr.send();
+	}
+	function send_flashPiLo() {
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function() {
+			if (this.readyState == 4) {
+				var element = document.getElementById("Flash-button");
+				if (this.responseText == "ok") {
+					element.classList.add("success");
+					setTimeout(function () {element.classList.remove("success")},1500);
+				}else{
+					console.error(xhr.statusText);
+					console.log("Fehler @ Flash_PiLo");
+					element.classList.add("fail");
+					setTimeout(function () {element.classList.remove("fail")},1500);
+				}
+			}
+		};
+		xhr.open("GET","/flashpilo/",true);
+		xhr.send();
+	}
+	function send_piloconf() {
+		var xhr = new XMLHttpRequest();
+		var urldata = "/sendpiloconf?";
+		urldata += ("SlavAddr="+SetSlAdd);
+		urldata += ("&TimeBase="+SetTimba);
+		urldata += ("&TimFacLo="+SetTimLo);
+		urldata += ("&TimFacHi="+SetTimHi);
+		urldata += ("&AvgFactr="+SetAvgFa);
+		urldata += ("&TimPuFac="+SetPuFac);
+		xhr.onreadystatechange = function() {
+			if (this.readyState == 4) {
+				var element = document.getElementById("Send-button");
+				if (this.responseText == "ok") {
+					element.classList.add("success");
+					setTimeout(function () {element.classList.remove("success")},1500);
+				}else{
+					console.log("Fehler @ Send_PiLoConf");
+					console.error(xhr.statusText);
+					element.classList.add("fail");
+					setTimeout(function () {element.classList.remove("fail")},1500);
+				}
+				get_pilo_conf();
+			}
+		};
+		xhr.open("GET",urldata,true);
+		xhr.send();
+	}
+	function send_factorydef() {
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function() {
+			if (this.readyState == 4) {
+				var element = document.getElementById("Factdef-button");
+				if (this.responseText == "ok") {
+					element.classList.add("success");
+					setTimeout(function () {element.classList.remove("success")},1500);
+				}else{
+					console.log("Fehler @ Factory Default");
+					console.error(xhr.statusText);
+					element.classList.add("fail");
+					setTimeout(function () {element.classList.remove("fail")},1500);
+				}
+			}
+		};
+		xhr.open("GET","/factorydef/",true);
+		xhr.send();
+	}
+	function send_amp_zero() {
+		var xhr = new XMLHttpRequest();
+		xhr.onreadystatechange = function() {
+			if (this.readyState == 4) {
+				var element = document.getElementById("AmpZero-button");
+				if (this.responseText == "ok") {
+					element.classList.add("success");
+					setTimeout(function () {element.classList.remove("success")},1500);
+				}else{
+					console.log("Fehler @ Amp-Zero");
+					console.error(xhr.statusText);
+					element.classList.add("fail");
+					setTimeout(function () {element.classList.remove("fail")},1500);
+				}
+			}
+		};
+		xhr.open("GET","/ampzero/",true);
+		xhr.send();
+	}
+	window.onload = function() {
+		get_pilo_conf();
+	}
+	function SetTimeBase(newval) {
+		if (!isNaN(parseFloat(newval))) {
+			SetTimba = parseInt(newval,10);
+			document.getElementById("nTimebase").innerHTML = TimeBaseText[SetTimba];
+			calcNmeas();
+		}
+	}
+	function SetAvgFactr(newval) {
+		if (!isNaN(parseFloat(newval))) {
+			SetAvgFa = parseInt(newval,10);
+			document.getElementById("nAvgFactr").innerHTML = Math.pow(2,SetAvgFa);
+		}
+	}
+	function SetSlavAddr(newval) {
+		oSlAdd = SetSlAdd;
+		SetSlAdd = parseInt(newval,10);
+		if (SetSlAdd < 4 || SetSlAdd > 124) {
+			SetSlAdd = oSlAdd;
+			document.getElementById("iSlavAddr").style.backgroundColor = "#ff4c4c";
+		}else{
+			document.getElementById("iSlavAddr").style.backgroundColor = "";
+		};
+		document.getElementById("nSlavAddr").innerHTML = SetSlAdd;
+	}
+	function SetTimPuFac(newval) {
+		oPuFac = SetPuFac;
+		SetPuFac = parseInt(newval,10);
+		inbgcol = document.getElementById("iTimPuFac").style.backgroundColor;
+		if (SetPuFac < 1 || SetPuFac > 255) {
+			SetPuFac = oPuFac;
+			document.getElementById("iTimPuFac").style.backgroundColor = "#ff4c4c";
+		}else{
+			document.getElementById("iTimPuFac").style.backgroundColor = "";
+		};
+		document.getElementById("nTimPuFac").innerHTML = SetPuFac;
+	}
+	function SetTimFacLo(newval) {
+		oTimLo = SetTimLo;
+		SetTimLo = parseInt(newval,10);
+		inbgcol = document.getElementById("iTimFacLo").style.backgroundColor;
+		if (SetTimLo < 0 || SetTimLo > 255) {
+			SetTimLo = oTimLo;
+			document.getElementById("iTimFacLo").style.backgroundColor = "#ff4c4c";
+		}else{
+			document.getElementById("iTimFacLo").style.backgroundColor = "";
+		};
+		document.getElementById("nTimFacLo").innerHTML = SetTimLo;
+		calcNmeas();
+	}
+	function SetTimFacHi(newval) {
+		oTimHi = SetTimHi;
+		SetTimHi = parseInt(newval,10);
+		inbgcol = document.getElementById("iTimFacHi").style.backgroundColor;
+		if (SetTimHi < 0 || SetTimHi > 255) {
+			SetTimHi = oTimHi;
+			document.getElementById("iTimFacHi").style.backgroundColor = "#ff4c4c";
+		}else{
+			document.getElementById("iTimFacHi").style.backgroundColor = "";
+		};
+		document.getElementById("nTimFacHi").innerHTML = SetTimHi;
+		calcNmeas();
+	}
+	</script>
+</body>
+</html>

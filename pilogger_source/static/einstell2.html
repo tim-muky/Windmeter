@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html>
+<title>PiLogger Einstellungen 2</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="/static/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon"/>
+<link href="/static/w3_pilo.css" rel="stylesheet"/>
+
+<body class="w3-border-blue-grey">
+	<!-- Top container -->
+	<div class="w3-bar w3-top w3-indigo w3-large" style="z-index:4">
+		<button class="w3-bar-item w3-button w3-hide-large w3-hover-none w3-hover-text-light-grey" onclick="sb_open();">
+			<a class="Icon_Menu_wh" style="height:26px;width:26px"></a> Menu</button>
+		<span class="w3-bar-item">PiLogger</span>
+		<span class="w3-bar-item w3-right"><i class="Icon_Logo" class="w3-margin-right" style="height:26px;width:33px"></i></span>
+	</div>
+	<!-- Sidebar/menu -->
+	<nav class="w3-sidebar w3-collapse w3-pale-blue w3-animate-left" style="z-index:3;width:180px;" id="mySidebar">
+		<div class="w3-container">
+			<h5>Menu</h5>
+		</div>
+		<div class="w3-bar-block">
+			<a href="#" class="w3-bar-item w3-button w3-padding-16 w3-hide-large w3-dark-grey w3-hover-black" onclick="sb_close()" title="close menu"><i class="Icon_Close_wh" style="height:26px;width:26px"></i> Close Menu</a>
+			<a href="/" class="w3-bar-item w3-button w3-padding"><i class="Icon_Live_bl" style="height:26px;width:32px"></i> Live Werte</a>
+			<a href="/static/livechart.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_ChartL_bl" style="height:26px;width:32px"></i> Live Kurve</a>
+			<a href="/static/diagramme.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Chart_bl" style="height:26px;width:32px"></i> Diagramme</a>
+			<a href="/static/einstell1.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Einstell_bl" style="height:26px;width:32px"></i> Einstellungen 1</a>
+			<a href="#" class="w3-bar-item w3-button w3-padding w3-blue"><i class="Icon_Wrench_bl" style="height:26px;width:32px"></i> Einstellungen 2</a>
+			<a href="/static/kalibration.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Waage_bl" style="height:26px;width:32px"></i> Kalibration</a>
+			<a href="/static/download.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Download_bl" style="height:26px;width:32px"></i> Download</a>
+		</div>
+	</nav>
+	<!-- Overlay effect when opening sidebar on small screens -->
+	<div class="w3-overlay w3-hide-large w3-animate-opacity" onclick="sb_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
+	<!-- !PAGE CONTENT! -->
+	<div class="w3-main" style="margin-left:185px;margin-top:45px;">
+		<div class="w3-container w3-light-grey">
+			<h4>Einstellungen 2</h4>
+		</div>
+		<div class="w3-table-all" style="font-size:90%"><table>
+			<tr><td><b>Raspberry<br>Einstellungen</b></td><td><br><b>Ist</b></td><td> </td><td><br><b>Soll</b></td><td><br><b>Eingabe</b></td></tr>
+			<tr><td>Messintervall<br>(PiLogger Interrupt)</td><td><span id="MeasInter"></td></tr>
+			<tr><td>Log Faktor</td><td><span id="LogFactor"></td><td></td><td><span id="nLogFactor"></td><td>
+				<input id="iLogFactor" inputmode="decimal" onchange="Set_LogFactor(this.value)" size="4" maxlength="4"></td></tr>
+			<tr><td><i>ergibt Log-Intervall</i></td><td><b><span id="LogInter"></b></td><td></td><td><b><span id="nLogInter"></b></td><td></td></tr>
+			<tr><td>Statistik Reset<br>zum Log-Zeitpunkt</td><td><span id="StatReset"></td><td> </td><td><span id="nStatReset"></td><td>
+				<label><select onchange="Set_StatReset(this.value)">
+					<option value="nil"> </option>
+					<option value="true">ja</option>
+					<option value="false">nein</option>
+			</td></tr>
+			<tr><td>Faktor Pulse 1<br>Sensorkonstante</td><td><span id="FactPulse1"></td><td> </td><td><span id="nFactPulse1"></td><td>
+				<input id="iFactPulse1" inputmode="decimal" onchange="Set_FactPulse1(this.value)" size="7" maxlength="7"></td></tr>
+			<tr><td>Einheit Pulse 1<br>Haupteinheit</td><td><span id="UnitPulse1"></td><td> </td><td><span id="nUnitPulse1"></td><td>
+				<input id="iUnitPulse1" onchange="Set_UnitPulse1(this.value)" size="6" maxlength="6"></td></tr>
+			<tr><td>Faktor Pulse 2<br>(Neben)</td><td><span id="FactPulse2"></td><td> </td><td><span id="nFactPulse2"></td><td>
+				<input id="iFactPulse2" inputmode="decimal" onchange="Set_FactPulse2(this.value)" size="7" maxlength="7"></td></tr>
+			<tr><td>Einheit Pulse 2<br>Nebeneinheit</td><td><span id="UnitPulse2"></td><td> </td><td><span id="nUnitPulse2"></td><td>
+				<input id="iUnitPulse2" onchange="Set_UnitPulse2(this.value)" size="6" maxlength="6"></td></tr>
+			<tr><td>Typ Temp Sensor</td><td><span id="TempSense"></td><td> </td><td><span id="nTempSense"></td><td>
+				<label><select onchange="Set_TempSense(this.value)">
+					<option value="nil"> </option>
+					<option value="NTC 10k B3928">NTC 10k B3928</option>
+					<option value="NTC 10k B3477">NTC 10k B3477</option>
+					<option value="NTC Tabelle">NTC Tabelle</option>
+					<option value="PTC Pt1000">PTC Pt1000</option>
+					<option value="PTC KTY81-110">PTC KTY81-110</option>
+					<option value="PTC Tabelle">PTC Tabelle</option>
+			</td></tr>
+			<tr><td>Split Log-Datei</td><td><span id="LogSplit"></td><td> </td><td><span id="nLogSplit"></td><td>
+				<label><select onchange="Set_LogSplit(this.value)">
+					<option value="nil"> </option>
+					<option value="true">ja</option>
+					<option value="false">nein</option>
+			</td></tr>
+			<tr><td>Zeilenzahl für<br>Split Log-Datei</td><td><span id="LogLines"></td><td> </td><td><span id="nLogLines"></td><td>
+				<input id="iLogLines" inputmode="decimal" onchange="Set_LogLines(this.value)" size="6" maxlength="6"></td></tr>
+			<tr><td><i>Neuer Wert ergibt:</i></td><td><span id="LogSpan"></td><td>Zeit</td><td><span id="LogSize"></td><td>kB</td></tr>
+			</table>
+		</div>
+		<div class="w3-panel">
+			<button class="pL-button" id="Send-button" onClick="send_RaspiConf()">Speichern </button>
+			<button class="pL-button w3-yellow w3-padding" id="ResetEner-button" onClick="req_ResetEner()"><small>Reset Energiezähler</small></button>
+			<button class="pL-button w3-teal w3-padding" id="SplitNow-button" onClick="req_SplitNow()">Split Log jetzt</button>
+		</div>
+		<div class="w3-panel">
+			<button class="pL-button w3-orange w3-padding" id="Reboot-button" onClick="req_Reboot()">Neustart</button>
+			<button class="pL-button w3-red w3-padding" id="Shutdown-button" onClick="req_Shutdown()">Herunterfahren</button>
+		</div>
+		<!-- End page content -->
+	</div>
+	<script>
+	/**
+	* @license
+	* Copyright 2018, 2024 G.Weiß-Engel (info@pilogger.de)
+	* MIT-licensed (http://opensource.org/licenses/MIT)
+	*/
+
+	var mySidebar = document.getElementById("mySidebar");
+	var overlayBg = document.getElementById("myOverlay");
+	function sb_open() {
+		if (mySidebar.style.display === 'block') {
+			mySidebar.style.display = 'none';
+			overlayBg.style.display = "none";
+		} else {
+			mySidebar.style.display = 'block';
+			overlayBg.style.display = "block";
+		}
+	}
+	function sb_close() {
+		mySidebar.style.display = "none";
+		overlayBg.style.display = "none";
+	}
+
+	var SetFactPul,SetLogFact,SetStatRes,SetTempSen,SetUnitPul,MeasInter,LogInter,SetLogLines;
+
+	function secText(sec) {
+		if (sec >= 60) {
+			min = parseInt(sec/60);
+			sec = parseFloat(sec-min*60);
+		} else {
+			min = parseInt(0);
+			sec = parseFloat(sec);
+		};
+		if (min >= 60) {
+			std = parseInt(min/60);
+			min = parseInt(min-std*60);
+		} else {
+			std = parseInt(0);
+		};
+		if (std >= 24) {
+			day = parseInt(std/24);
+			std = parseInt(std - day*24);
+			out = day.toFixed(0)+'d '+std.toFixed(0)+'h '+min.toFixed(0)+'m '+sec+'s';
+		} else {
+			day = parseInt(0);
+			if (std > 0){
+				out = std.toFixed(0)+'h '+min.toFixed(0)+'m '+sec+'s';
+			} else {
+				if (min > 0) {
+					out = min.toFixed(0)+'m '+sec+'s';
+				} else {
+					out = sec+'s';
+				};
+			};
+		};
+		return out;
+	}
+
+	function get_raspi_conf() {
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET","/getraspiconf/", true);
+		xhr.onreadystatechange = function () {
+			if (xhr.readyState === 4) {
+				if (xhr.status === 200) {
+					var res = JSON.parse(xhr.responseText);
+					for (id in res) {
+						if (id == "MeasInter") {
+							MeasInter = parseFloat(res[id]);
+							document.getElementById("MeasInter").innerHTML = secText(MeasInter);
+						};
+						if (id == "LogFactor") {
+							SetLogFact = parseInt(res[id]);
+							document.getElementById("LogFactor").innerHTML = SetLogFact;
+							document.getElementById("nLogFactor").innerHTML = SetLogFact;
+						};
+						if (id == "StatReset") {
+							if (res[id] == true) {
+								SetStatRes = "true"
+								document.getElementById("StatReset").innerHTML = "ja";
+								document.getElementById("nStatReset").innerHTML = "ja";
+							} else {
+								SetStatRes = "false"
+								document.getElementById("StatReset").innerHTML = "nein";
+								document.getElementById("nStatReset").innerHTML = "nein";
+							}
+						};
+						if (id == "FactPulse1") {
+							SetFactPul1 = parseFloat(res[id]);
+							document.getElementById("FactPulse1").innerHTML = SetFactPul1;
+							document.getElementById("nFactPulse1").innerHTML = SetFactPul1;
+						};
+						if (id == "UnitPulse1") {
+							SetUnitPul1 = res[id];
+							document.getElementById("UnitPulse1").innerHTML = SetUnitPul1;
+							document.getElementById("nUnitPulse1").innerHTML = SetUnitPul1;
+						};
+						if (id == "FactPulse2") {
+							SetFactPul2 = parseFloat(res[id]);
+							document.getElementById("FactPulse2").innerHTML = SetFactPul2;
+							document.getElementById("nFactPulse2").innerHTML = SetFactPul2;
+						};
+						if (id == "UnitPulse2") {
+							SetUnitPul2 = res[id];
+							document.getElementById("UnitPulse2").innerHTML = SetUnitPul2;
+							document.getElementById("nUnitPulse2").innerHTML = SetUnitPul2;
+						};
+						if (id == "TempSense") {
+							SetTempSen = res[id];
+							document.getElementById("TempSense").innerHTML = SetTempSen;
+							document.getElementById("nTempSense").innerHTML = SetTempSen;
+						};
+						if (id == "LogSplit") {
+							if (res[id] == true) {
+								SetLogSplit = "true"
+								document.getElementById("LogSplit").innerHTML = "ja";
+								document.getElementById("nLogSplit").innerHTML = "ja";
+							} else {
+								SetLogSplit = "false"
+								document.getElementById("LogSplit").innerHTML = "nein";
+								document.getElementById("nLogSplit").innerHTML = "nein";
+							}
+						};
+						if (id == "LogLines") {
+							SetLogLines = parseInt(res[id]);
+							document.getElementById("LogLines").innerHTML = SetLogLines;
+//							document.getElementById("nLogLines").innerHTML = SetLogLines;
+						};
+					};
+					LogInter = MeasInter * SetLogFact;
+					document.getElementById("LogInter").innerHTML = secText(LogInter);
+					document.getElementById("nLogInter").innerHTML = secText(LogInter);
+					Set_LogLines(SetLogLines);
+				} else {
+					console.error(xhr.statusText);
+					console.log("Error processing getraspiconf");
+				}
+			}
+		};
+		xhr.send();
+	}
+
+	function send_RaspiConf() {
+		var xhr = new XMLHttpRequest();
+		var urldata = "/sendraspiconf?";
+		urldata += ("LogFactor="+SetLogFact);
+		urldata += ("&StatReset="+SetStatRes);
+		urldata += ("&FactPulse1="+SetFactPul1);
+		urldata += ("&UnitPulse1="+SetUnitPul1);
+		urldata += ("&FactPulse2="+SetFactPul2);
+		urldata += ("&UnitPulse2="+SetUnitPul2);
+		urldata += ("&TempSense="+SetTempSen);
+		urldata += ("&LogSplit="+SetLogSplit);
+		urldata += ("&LogLines="+SetLogLines);
+		xhr.onreadystatechange = function() {
+			if (this.readyState == 4) {
+				var element = document.getElementById("Send-button");
+				if (this.responseText == "ok") {
+					element.classList.add("success");
+					setTimeout(function () {element.classList.remove("success")},2000);
+				}else{
+					console.error(xhr.statusText);
+					console.log("Fehler @ Send_RaspiConf");
+					element.classList.add("fail");
+					setTimeout(function () {element.classList.remove("fail")},2000);
+				}
+				get_raspi_conf();
+			}
+		};
+		xhr.open("GET",urldata,true);
+		xhr.send();
+	}
+
+	function req_ResetEner() {
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET","/reqenerzero/",true);
+		xhr.onreadystatechange = function() {
+			if (this.readyState == 4) {
+				var element = document.getElementById("ResetEner-button");
+				if (this.responseText == "ok") {
+					element.classList.add("success");
+					setTimeout(function () {element.classList.remove("success")},2000);
+				}else{
+					console.error(xhr.statusText);
+					console.log("Fehler @ Req_EnerZero");
+					element.classList.add("fail");
+					setTimeout(function () {element.classList.remove("fail")},2000);
+				}
+			}
+		};
+		xhr.send();
+	}
+
+	function req_SplitNow() {
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET","/reqsplitnow/",true);
+		xhr.onreadystatechange = function() {
+			if (this.readyState == 4) {
+				var element = document.getElementById("SplitNow-button");
+				if (this.responseText == "ok") {
+					element.classList.add("success");
+					setTimeout(function () {element.classList.remove("success")},2000);
+				}else{
+					console.error(xhr.statusText);
+					console.log("Fehler @ Req_SplitNow");
+					element.classList.add("fail");
+					setTimeout(function () {element.classList.remove("fail")},2000);
+				}
+			}
+		};
+		xhr.send();
+	}
+
+	function req_Shutdown() {
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET","/reqshutdown/",true);
+		xhr.onreadystatechange = function() {
+			if (this.readyState == 4) {
+				var element = document.getElementById("Shutdown-button");
+				if (this.responseText == "ok") {
+					element.classList.add("success");
+					setTimeout(function () {element.classList.remove("success")},2000);
+				}else{
+					console.error(xhr.statusText);
+					console.log("Fehler @ Req_Shutdown");
+					element.classList.add("fail");
+					setTimeout(function () {element.classList.remove("fail")},2000);
+				}
+			}
+		};
+		xhr.send();
+	}
+
+	function req_Reboot() {
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET","/reqreboot/",true);
+		xhr.onreadystatechange = function() {
+			if (this.readyState == 4) {
+				var element = document.getElementById("Reboot-button");
+				if (this.responseText == "ok") {
+					element.classList.add("success");
+					setTimeout(function () {element.classList.remove("success")},2000);
+				}else{
+					console.error(xhr.statusText);
+					console.log("Fehler @ Req_Reboot");
+					element.classList.add("fail");
+					setTimeout(function () {element.classList.remove("fail")},2000);
+				}
+			}
+		};
+		xhr.send();
+	}
+
+	window.onload = function() {
+		get_raspi_conf();
+	}
+
+	function Set_LogFactor(newval) {
+		oLogFact = SetLogFact;
+		SetLogFact = parseInt(newval,10);
+		if (SetLogFact < 1 || SetLogFact > 10000) {
+			SetLogFact = oLogFact;
+			document.getElementById("iLogFactor").style.backgroundColor = "#ff4c4c";
+		}else{
+			document.getElementById("iLogFactor").style.backgroundColor = "";
+		};
+		document.getElementById("nLogFactor").innerHTML = SetLogFact;
+		LogInter = MeasInter * SetLogFact;
+		document.getElementById("nLogInter").innerHTML = secText(LogInter);
+		Set_LogLines(SetLogLines);
+	}
+
+	function Set_StatReset(newval) {
+		if (newval == "true") {
+			SetStatRes = true;
+			document.getElementById("nStatReset").innerHTML = "ja";
+		}
+		if (newval == "false") {
+			SetStatRes = false;
+			document.getElementById("nStatReset").innerHTML = "nein";
+		}
+	}
+	function Set_FactPulse1(newval) {
+		newval = newval.replace(/,/,".");
+		SetFactPul1 = parseFloat(newval);
+		document.getElementById("nFactPulse1").innerHTML = SetFactPul1;
+	}
+	function Set_UnitPulse1(newval) {
+		SetUnitPul1 = newval;
+		document.getElementById("nUnitPulse1").innerHTML = SetUnitPul1;
+	}
+	function Set_FactPulse2(newval) {
+		newval = newval.replace(/,/,".");
+		SetFactPul2 = parseFloat(newval);
+		document.getElementById("nFactPulse2").innerHTML = SetFactPul2;
+	}
+	function Set_UnitPulse2(newval) {
+		SetUnitPul2 = newval;
+		document.getElementById("nUnitPulse2").innerHTML = SetUnitPul2;
+	}
+	function Set_TempSense(newval) {
+		if (newval != "nil") {
+			SetTempSen = newval;
+			document.getElementById("nTempSense").innerHTML = SetTempSen;
+		}
+	}
+	function Set_LogSplit(newval) {
+		if (newval == "true") {
+			SetLogSplit = true;
+			document.getElementById("nLogSplit").innerHTML = "ja";
+		} else {
+			SetLogSplit = false;
+			document.getElementById("nLogSplit").innerHTML = "nein";
+		}
+	}
+	function Set_LogLines(newval) {
+		SetLogLines = parseInt(newval,10);
+		sec = SetLogLines * LogInter;
+		y = (SetLogLines * 288 + 432) / 1024;
+		document.getElementById("nLogLines").innerHTML = SetLogLines;
+		document.getElementById("LogSpan").innerHTML = secText(sec);
+		document.getElementById("LogSize").innerHTML = y.toFixed(0);
+	}
+	</script>
+</body>
+</html>

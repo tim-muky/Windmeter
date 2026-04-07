@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html>
+<title>PiLogger Diagramme</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel=preload href="/static/w3_pilo.css" as="style"/>
+<link rel=preload href="/static/iconset.png" as="image"/>
+<link href="/static/w3_pilo.css" rel="stylesheet"/>
+<link href="/static/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon"/>
+<script src="/static/dygraph_p.min.js"></script>
+<link href="/static/dygraph_p.css" rel="stylesheet"/>
+
+<body class="w3-border-blue-grey">
+	<!-- Top container -->
+	<div class="w3-bar w3-top w3-indigo w3-large" style="z-index:4">
+		<button class="w3-bar-item w3-button w3-hide-large w3-hover-none w3-hover-text-light-grey" onclick="sb_open();">
+			<a class="Icon_Menu_wh" style="height:26px;width:26px"></a> Menu</button>
+		<span class="w3-bar-item">PiLogger</span>
+		<span class="w3-bar-item w3-right"><i class="Icon_Logo" class="w3-margin-right" style="height:26px;width:33px"></i></span>
+	</div>
+	<!-- Sidebar/menu -->
+	<nav class="w3-sidebar w3-collapse w3-pale-blue w3-animate-left" style="z-index:3;width:180px;" id="mySidebar">
+		<div class="w3-container">
+			<h5>Menu</h5>
+		</div>
+		<div class="w3-bar-block">
+			<a href="#" class="w3-bar-item w3-button w3-padding-16 w3-hide-large w3-dark-grey w3-hover-black" onclick="sb_close()" title="close menu"><i class="Icon_Close_wh" style="height:26px;width:26px"></i> Close Menu</a>
+			<a href="/" class="w3-bar-item w3-button w3-padding"><i class="Icon_Live_bl" style="height:26px;width:32px"></i> Live Werte</a>
+			<a href="/static/livechart.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_ChartL_bl" style="height:26px;width:32px"></i> Live Kurve</a>
+			<a href="/static/diagramme.html" class="w3-bar-item w3-button w3-padding w3-blue"><i class="Icon_Chart_bl" style="height:26px;width:32px"></i> Diagramme</a>
+			<a href="/static/einstell1.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Einstell_bl" style="height:26px;width:32px"></i> Einstellungen 1</a>
+			<a href="/static/einstell2.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Wrench_bl" style="height:26px;width:32px"></i> Einstellungen 2</a>
+			<a href="/static/kalibration.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Waage_bl" style="height:26px;width:32px"></i> Kalibration</a>
+			<a href="/static/download.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Download_bl" style="height:26px;width:32px"></i> Download</a>
+		</div>
+	</nav>
+	<!-- Overlay effect when opening sidebar on small screens -->
+	<div class="w3-overlay w3-hide-large w3-animate-opacity" onclick="sb_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
+	<!-- !PAGE CONTENT! -->
+	<div class="w3-main" style="margin-left:185px;margin-top:45px;height:100%">
+		<div class="w3-container w3-light-grey">
+			<h4>Diagramme</h4>
+		</div>
+		<div id="graph_div" style="position:absolute;height:84vh;width:85vw;margin-top:10px;margin-bottom:10px;z-index:1"></div>
+		<div class="w3-container" style="position:absolute;top:104vh;top:calc(84vh + 115px);width:85vw">
+			<div class="w3-half">
+				<table class="w3-table-all">
+					<tr>
+						<td><input type=checkbox id="fill" checked onClick="changeFill(this)">
+						<label for="fill">Füllen</label></td>
+						<td><b>Mittelwert:</b>
+						<input id="AvgInput" inputmode="numeric" onchange="Set_AvgVal(this.value)" size="2" maxlength="4" style="text-align:right;">
+						<label for="AvgInput">Werte</label></td>
+					</tr>
+				</table>
+			</div>
+			<div class="w3-half">
+				<br><br><br>
+			</div>
+			<div class="w3-half">
+				<b>Anzeige linke Achse:</b>
+				<table class="w3-table-all">
+					<tr><td>Temp</td>
+						<td><input type=checkbox id="1" unchecked onClick="change(this)">
+							<label for="1">Avg</label></td>
+						<td><input type=checkbox id="2" unchecked onClick="change(this)">
+							<label for="2">Min</label></td>
+						<td><input type=checkbox id="3" unchecked onClick="change(this)">
+							<label for="3">Max</label></td>
+						</tr>
+					<tr><td>Wind</td>
+						<td><input type=checkbox id="5" unchecked onClick="change(this)">
+							<label for="5">Avg</label></td>
+						<td><input type=checkbox id="6" unchecked onClick="change(this)">
+							<label for="6">Min</label></td>
+						<td><input type=checkbox id="7" unchecked onClick="change(this)">
+							<label for="7">Max</label></td>
+						</tr>
+					<tr><td>Wind Mittel</td>
+						<td><input type=checkbox id="26" unchecked onClick="change(this)">
+							<label for="26">1h</label></td>
+						<td><input type=checkbox id="27" unchecked onClick="change(this)">
+							<label for="27">1d</label></td>
+						<td><input type=checkbox id="28" unchecked onClick="change(this)">
+							<label for="28">1y</label></td>
+						</tr>
+					<tr><td>Volt</td>
+						<td><input type=checkbox id="9" unchecked onClick="change(this)">
+							<label for="9">Avg</label></td>
+						<td><input type=checkbox id="10" unchecked onClick="change(this)">
+							<label for="10">Min</label></td>
+						<td><input type=checkbox id="11" unchecked onClick="change(this)">
+							<label for="11">Max</label></td>
+						</tr>
+					<tr><td>Amps</td>
+						<td><input type=checkbox id="13" unchecked onClick="change(this)">
+							<label for="13">Avg</label></td>
+						<td><input type=checkbox id="14" unchecked onClick="change(this)">
+							<label for="14">Min</label></td>
+						<td><input type=checkbox id="15" unchecked onClick="change(this)">
+							<label for="15">Max</label></td>
+						</tr>
+					<tr><td>Watt</td>
+						<td><input type=checkbox id="17" unchecked onClick="change(this)">
+							<label for="17">Avg</label></td>
+						<td><input type=checkbox id="18" unchecked onClick="change(this)">
+							<label for="18">Min</label></td>
+						<td><input type=checkbox id="19" unchecked onClick="change(this)">
+							<label for="19">Max</label></td>
+						</tr>
+					<tr><td>Wh Tag</td>
+						<td><input type=checkbox id="23" unchecked onClick="change(this)">
+							<label for="23">BilTg</label></td>
+						<td><input type=checkbox id="24" unchecked onClick="change(this)">
+							<label for="24">ErtTg</label></td>
+						<td><input type=checkbox id="25" unchecked onClick="change(this)">
+							<label for="25">VerTg</label></td>
+						</tr>
+					<tr><td>Wh Dauer</td>
+						<td><input type=checkbox id="20" unchecked onClick="change(this)">
+							<label for="20">Bila</label></td>
+						<td><input type=checkbox id="21" unchecked onClick="change(this)">
+							<label for="21">Ertr</label></td>
+						<td><input type=checkbox id="22" unchecked onClick="change(this)">
+							<label for="22">Verb</label></td>
+						</tr>
+				</table>
+			</div>
+			<div class="w3-half">
+				<b>Anzeige rechte Achse:</b>
+				<table class="w3-table-all">
+					<tr><td>Temp</td>
+						<td><input type=checkbox id="31" unchecked onClick="change(this)">
+							<label for="31">Avg</label></td>
+						<td><input type=checkbox id="32" unchecked onClick="change(this)">
+							<label for="32">Min</label></td>
+						<td><input type=checkbox id="33" unchecked onClick="change(this)">
+							<label for="33">Max</label></td>
+						</tr>
+					<tr><td>Wind</td>
+						<td><input type=checkbox id="35" unchecked onClick="change(this)">
+							<label for="35">Avg</label></td>
+						<td><input type=checkbox id="36" unchecked onClick="change(this)">
+							<label for="36">Min</label></td>
+						<td><input type=checkbox id="37" unchecked onClick="change(this)">
+							<label for="37">Max</label></td>
+						</tr>
+					<tr><td>Wind Mittel</td>
+						<td><input type=checkbox id="56" unchecked onClick="change(this)">
+							<label for="56">1h</label></td>
+						<td><input type=checkbox id="57" unchecked onClick="change(this)">
+							<label for="57">1d</label></td>
+						<td><input type=checkbox id="58" unchecked onClick="change(this)">
+							<label for="58">1y</label></td>
+						</tr>
+					<tr><td>Volt</td>
+						<td><input type=checkbox id="39" unchecked onClick="change(this)">
+							<label for="39">Avg</label></td>
+						<td><input type=checkbox id="40" unchecked onClick="change(this)">
+							<label for="40">Min</label></td>
+						<td><input type=checkbox id="41" unchecked onClick="change(this)">
+							<label for="41">Max</label></td>
+						</tr>
+					<tr><td>Amps</td>
+						<td><input type=checkbox id="43" unchecked onClick="change(this)">
+							<label for="43">Avg</label></td>
+						<td><input type=checkbox id="44" unchecked onClick="change(this)">
+							<label for="44">Min</label></td>
+						<td><input type=checkbox id="45" unchecked onClick="change(this)">
+							<label for="45">Max</label></td>
+						</tr>
+					<tr><td>Watt</td>
+						<td><input type=checkbox id="47" unchecked onClick="change(this)">
+							<label for="47">Avg</label></td>
+						<td><input type=checkbox id="48" unchecked onClick="change(this)">
+							<label for="48">Min</label></td>
+						<td><input type=checkbox id="49" unchecked onClick="change(this)">
+							<label for="49">Max</label></td>
+						</tr>
+					<tr><td>Wh Tag</td>
+						<td><input type=checkbox id="53" unchecked onClick="change(this)">
+							<label for="53">BilTg</label></td>
+						<td><input type=checkbox id="54" unchecked onClick="change(this)">
+							<label for="54">ErtTg</label></td>
+						<td><input type=checkbox id="55" unchecked onClick="change(this)">
+							<label for="55">VerTg</label></td>
+						</tr>
+					<tr><td>Wh Dauer</td>
+						<td><input type=checkbox id="50" unchecked onClick="change(this)">
+							<label for="50">Bila</label></td>
+						<td><input type=checkbox id="51" unchecked onClick="change(this)">
+							<label for="51">Ertr</label></td>
+						<td><input type=checkbox id="52" unchecked onClick="change(this)">
+							<label for="52">Verb</label></td>
+						</tr>
+				</table>
+			</div>
+			<b>.</b>
+		</div>
+	</div>
+	<!-- End page content -->
+	<script>
+	/**
+	* @license
+	* Copyright 2018,2024 G.Weiß-Engel (info@pilogger.de)
+	* MIT-licensed (http://opensource.org/licenses/MIT)
+	*/
+	var mySidebar = document.getElementById("mySidebar");
+	var overlayBg = document.getElementById("myOverlay");
+	function sb_open() {
+		if (mySidebar.style.display === 'block') {
+			mySidebar.style.display = 'none';
+			overlayBg.style.display = "none";
+		} else {
+			mySidebar.style.display = 'block';
+			overlayBg.style.display = "block";
+		}
+	}
+	function sb_close() {
+		mySidebar.style.display = "none";
+		overlayBg.style.display = "none";
+	}
+	var g_show = getURLParameter('show');
+	var g_data = "/logdata/";
+	var url_data = getURLParameter('data');
+	if (url_data != '') {
+		g_data += url_data;
+	} else {
+		g_data += 'showdata.csv';
+	}
+	var AvgVal = 1;
+	var g = [];
+	function drawgraph() {
+		g = new Dygraph(
+			document.getElementById("graph_div"),
+			g_data, {
+				axes:{y2:{labelsKMG2:true,drawGrid:true,independentTicks:true,gridLinePattern:[2,2]}},
+				labelsKMG2:true,
+				interactionModel: Dygraph.defaultInteractionModel,
+				animatedZooms:false,
+				delimiter:';',
+				digitsAfterDecimal:2,
+				rollPeriod:1,
+				showRoller:false,
+				strokeWidth:2,
+				strokeBorderWidth:1,
+				errorBars:false,
+				connectSeparatedPoints:false,
+				pointSize:3,
+				highlightCircleSize:5,
+				legend:'always',
+				labelsSeparateLines:true,
+				colors:['#000000','#CC0000','#2847C5','#EE1111','#000000','#000066','#2847C5','#EE1111','#000000','#004D4D','#2847C5','#EE1111','#000000','#FF6600','#2847C5','#EE1111','#000000','#CCCC00','#2847C5','#EE1111','#2847C5','#000000','#EE1111','#2847C5','#000000','#EE1111','#000000','#2847C5','#EE1111'],
+				visibility:[false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]
+			}
+		);
+		g.ready ( function() {
+			g_labels=g.getLabels();
+			if(!localStorage.getItem('DiaGraphFill')) {StoreDefaultState()};
+			SetStoredState();
+			if (g_show == '') {
+				SetStoredTraces();
+			} else {
+				switch (g_show) {
+					case 'temp': setVis(1);break;
+					case 'wind': setVis(5);break;
+					case 'volt': setVis(9);break;
+					case 'amps': setVis(13);break;
+					case 'watt': setVis(17);break;
+					case 'enerperm': setVis(20);setVis(21);setVis(22);break;
+					case 'enerday': setVis(23);setVis(24);setVis(25);break;
+					case 'windavg': setVis(26);setVis(27);setVis(28);break;
+					default: setVis(1);
+				}
+			}
+		});
+	}
+	function change(el) {
+		reihe = parseInt(el.id);
+		VisTraces = localStorage.getItem('DiaGraphTraces');
+		TracesVis = Array.from(VisTraces);
+		if (reihe < 30) {
+			var reiheTag = g_labels[reihe+1];
+			g.setVisibility(reihe,el.checked);
+			if (el.checked) {
+				g.updateOptions({series:{[reiheTag]:{axis:'y',strokePattern:null}}});
+				document.getElementById(reihe+30).checked = false;
+				TracesVis[reihe+30] = '_';
+				TracesVis[reihe] = 'I';
+			} else {
+				TracesVis[reihe] = '_';
+			}
+		} else {
+			reiheTag = g_labels[reihe-29];
+			g.setVisibility(reihe-30,el.checked);
+			if (el.checked) {
+				g.updateOptions({series:{[reiheTag]:{axis:'y2',strokePattern:[2,1]}}});
+				document.getElementById(reihe-30).checked = false;
+				TracesVis[reihe-30] = '_';
+				TracesVis[reihe] = 'I';
+			} else {
+				g.updateOptions({series:{[reiheTag]:{axis:'y',strokePattern:null}}});
+				TracesVis[reihe] = '_';
+			}
+		}
+		VisTraces = TracesVis.join('');
+		if (g_show == '') {localStorage.setItem('DiaGraphTraces',(VisTraces))};
+	}
+	function changeFill(el) {
+		g.updateOptions({fillGraph: (el.checked)});
+		localStorage.setItem('DiaGraphFill', (el.checked));
+	}
+	function Set_AvgVal(uv) {
+		ov = AvgVal;
+		uv = uv.replace(/,/,".");
+		AvgVal = parseInt(uv);
+		if (AvgVal < 1 || AvgVal > 1000) {
+			AvgVal = ov;
+			document.getElementById("AvgInput").style.backgroundColor = "#ff4c4c";
+		}else{
+			document.getElementById("AvgInput").style.backgroundColor = "";
+		};
+		g.updateOptions({rollPeriod: AvgVal});
+		document.getElementById('AvgInput').value = AvgVal;
+		localStorage.setItem('DiaAvgVal', AvgVal);
+	}
+	function SetStoredState() {
+		GFill = (localStorage.getItem('DiaGraphFill')==='true');
+		document.getElementById('fill').checked = GFill;
+		AvgVal = parseInt(localStorage.getItem('DiaAvgVal'));
+		document.getElementById('AvgInput').value = AvgVal;
+		g.updateOptions({fillGraph: GFill, rollPeriod: AvgVal});
+	}
+	function SetStoredTraces() {
+		TracesVis = localStorage.getItem('DiaGraphTraces');
+		for (let r=0;r<=28;r++) {
+			if (TracesVis[r] == 'I') {
+				var reiheTag = g_labels[r+1];
+				g.updateOptions({series:{[reiheTag]:{axis:'y',strokePattern:null}}});
+				g.setVisibility(r,true);
+				document.getElementById(r).checked = true;
+			}
+		}
+		for (let r=30;r<=58;r++) {
+			if (TracesVis[r] == 'I') {
+				var reiheTag = g_labels[r-29];
+				g.updateOptions({series:{[reiheTag]:{axis:'y2',strokePattern:[2,1]}}});
+				g.setVisibility(r-30,true);
+				document.getElementById(r).checked = true;
+			}
+		}
+	}
+	function StoreDefaultState() {
+		localStorage.setItem('DiaGraphFill', false);
+		localStorage.setItem('DiaAvgVal', '1');
+		localStorage.setItem('DiaGraphTraces', '_I_________________________________________________________');
+	}
+	function setVis(k) {
+		g.setVisibility(parseInt(k),true);
+		document.getElementById(k).checked = true;
+	}
+	function getURLParameter(name) {
+		var value = decodeURIComponent((RegExp(name + '=' + '(.+?)(&|$|;)').exec(location.search) || [, ""])[1]);
+		return (value !== 'null') ? value : false;
+	}
+	drawgraph();
+	</script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+#!/bin/bash
+
+: <<'DISCLAIMER'
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+This script is licensed under the terms of the MIT license.
+
+DISCLAIMER
+
+CONFIG=/boot/config.txt
+TIMESYNC=/etc/systemd/timesyncd.conf
+USERHOME=/home/$USER
+SERVPATH=$USERHOME/pilogger
+
+confirm() {
+    read -r -p "$1 [j/N] " response < /dev/tty
+    if [[ $response =~ ^(ja|j|J)$ ]]; then
+        true
+    else
+        false
+    fi
+}
+
+add_dtoverlay() {
+    if grep -q "^dtoverlay=$1" $CONFIG; then
+        echo -e "\n$1 Overlay bereits aktiv"
+    elif grep -q "^#dtoverlay=$1" $CONFIG; then
+        sudo sed -i "/^#dtoverlay=$1$/ s|#||" $CONFIG
+        echo -e "\nOverlay $1 zu $CONFIG hinzugefügt"
+    else
+        echo "dtoverlay=$1" | sudo tee -a $CONFIG &> /dev/null
+        echo -e "\nOverlay $1 zu $CONFIG hinzugefügt"
+    fi
+}
+
+add_dtparam() {
+    if grep -q "^dtparam=$1" $CONFIG; then
+        echo -e "\n$1 Parameter bereits aktiv"
+    elif grep -q "^#dtparam=$1" $CONFIG; then
+        sudo sed -i "/^#dtparam=$1$/ s|#||" $CONFIG
+        echo -e "\nParameter $1 zu $CONFIG hinzugefügt"
+    else
+        echo "dtparam=$1" | sudo tee -a $CONFIG &> /dev/null
+        echo -e "\nParameter $1 zu $CONFIG hinzugefügt"
+    fi
+}
+
+add_timesync() {
+    if grep -q "^NTP=$1" $TIMESYNC; then
+        echo -e "\n$1 bereits als Zeitserver gesetzt"
+    elif grep -q "^#NTP=" $TIMESYNC; then
+        sudo sed -i "/^#NTP=/ s|#NTP=|NTP=$1|" $TIMESYNC
+        echo -e "\n$1 als Zeitserver gesetzt"
+    else
+        sudo sed -i "/^NTP=/ a NTP=$1" $TIMESYNC
+        echo -e "\n$1 als Zeitserver hinzugefügt"
+    fi
+}
+
+echo ""
+echo "Dieses Script installiert die PiLogger WebMonitor Software"
+echo "im Verzeichnis $SERVPATH"
+echo ""
+
+if confirm "Wollen Sie fortfahren ?"; then
+    echo ""
+    echo "Wenn Ihr Heimnetz-Router einen NTP-Zeitserver zur Verfügung stellt,"
+    echo "können Sie die Zeit des Raspberry Pi damit synchronisieren."
+    echo "Dadurch wird hierfür kein externer Internetzugang mehr benötigt."
+    echo ""
+    if confirm "Heimnetz-Router als Zeitserver verwenden ?"; then
+        INFO=$(route -n | grep -Po "0\.0\.0\.0\s*\K\S+(?=\s*0\.0\.0\.0)")
+        add_timesync $INFO
+        echo ""
+    fi
+    if [ -d /boot/firmware ]; then
+        CONFIG=/boot/firmware/config.txt
+    fi
+    add_dtparam i2c_arm=on
+    add_dtoverlay i2c-gpio,i2c_gpio_sda=2,i2c_gpio_scl=3,i2c_gpio_delay_us=2,bus=1
+    echo ""
+    sudo apt-get update
+    echo ""
+    sudo apt-get -y install python3-smbus
+    echo ""
+    sudo apt-get -y install python3-rpi.gpio
+    echo ""
+    sudo apt-get -y install python3-gpiozero
+    echo ""
+    sudo apt-get -y install python3-bottle
+    echo ""
+    cd $USERHOME
+    mkdir pilogger
+    cd pilogger
+    pwd
+    echo ""
+    echo "Download Archiv..."
+    echo ""
+    curl -#L https://www.pilogger.de/get/pilo-webmon -o PiLo-WebMon.zip
+    echo ""
+    if [ $? == 1 ]; then
+        echo "Datei konnte nicht heruntergeladen werden."
+        echo ""
+    else
+        unzip -o PiLo-WebMon.zip
+        rm PiLo-WebMon.zip
+        echo ""
+        sudo sed -i "/\/home\/pi/ s|/home/pi|$SERVPATH|g" $SERVPATH/pilo-webmon.service
+        sudo sed -i "6a User=$USER" $SERVPATH/pilo-webmon.service
+        echo ""
+        sudo cp ~/pilogger/pilo-webmon.service /lib/systemd/system/pilo-webmon.service
+        sudo systemctl daemon-reload
+        sudo systemctl enable pilo-webmon.service
+        echo ""
+        if [ $? == 1 ]; then
+            echo "Fehler beim Einrichten Autostart"
+        else
+            echo "Autostart eingerichtet"
+        fi
+        echo ""
+        sudo systemctl start pilo-webmon.service
+        echo ""
+        echo "Die täglichen Kontakte zum Raspbian-Update-Server (apt-daily)"
+        echo "sind externe Internetkontakte und können deaktiviert werden."
+        echo ""
+        if confirm "Möchten Sie Apt-daily deaktivieren ?"; then
+            sudo systemctl stop apt-daily.timer
+            sudo systemctl disable apt-daily.timer
+            systemctl status apt-daily.timer --no-pager
+            sudo systemctl mask apt-daily.service
+            sudo systemctl daemon-reload
+            systemctl status apt-daily.service --no-pager
+            sudo systemctl stop apt-daily-upgrade.timer
+            sudo systemctl disable apt-daily-upgrade.timer
+            systemctl status apt-daily-upgrade.timer --no-pager
+        fi
+        echo ""
+        echo "Die Installation ist jetzt durchgeführt."
+        echo "Einige Änderungen am System erfordern einen Neustart."
+        echo "Nach dem Neustart wird automatisch PiLogger WebMon ausgeführt."
+        echo ""
+        if confirm "Bereit zum Neustart ?"; then
+            sync && sudo reboot
+        fi
+    fi
+fi
+
+exit 0

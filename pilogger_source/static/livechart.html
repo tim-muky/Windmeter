@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html>
+<title>PiLogger Live Kurve</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel=preload href="/static/w3_pilo.css" as="style"/>
+<link rel=preload href="/static/iconset.png" as="image"/>
+<link href="/static/w3_pilo.css" rel="stylesheet"/>
+<link href="/static/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon"/>
+<script src="/static/dygraph_p.min.js"></script>
+<link href="/static/dygraph_p.css" rel="stylesheet"/>
+
+<body class="w3-border-blue-grey">
+	<!-- Top container -->
+	<div class="w3-bar w3-top w3-indigo w3-large" style="z-index:4">
+		<button class="w3-bar-item w3-button w3-hide-large w3-hover-none w3-hover-text-light-grey" onclick="sb_open()">
+			<a class="Icon_Menu_wh" style="height:26px;width:26px"></a> Menu</button>
+		<span class="w3-bar-item">PiLogger</span>
+		<span class="w3-bar-item w3-right"><i class="Icon_Logo" class="w3-margin-right" style="height:26px;width:33px"></i></span>
+	</div>
+	<!-- Sidebar/menu -->
+	<nav class="w3-sidebar w3-collapse w3-pale-blue w3-animate-left" style="z-index:3;width:180px;" id="mySidebar">
+		<div class="w3-container">
+			<h5>Menu</h5>
+		</div>
+		<div class="w3-bar-block">
+			<a href="#" class="w3-bar-item w3-button w3-padding-16 w3-hide-large w3-dark-grey w3-hover-black" onclick="sb_close()" title="close menu"><i class="Icon_Close_wh" style="height:26px;width:26px"></i> Close Menu</a>
+			<a href="/" class="w3-bar-item w3-button w3-padding"><i class="Icon_Live_bl" style="height:26px;width:32px"></i> Live Werte</a>
+			<a href="#" class="w3-bar-item w3-button w3-padding w3-blue"><i class="Icon_ChartL_bl" style="height:26px;width:32px"></i> Live Kurve</a>
+			<a href="/static/diagramme.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Chart_bl" style="height:26px;width:32px"></i> Diagramme</a>
+			<a href="/static/einstell1.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Einstell_bl" style="height:26px;width:32px"></i> Einstellungen 1</a>
+			<a href="/static/einstell2.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Wrench_bl" style="height:26px;width:32px"></i> Einstellungen 2</a>
+			<a href="/static/kalibration.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Waage_bl" style="height:26px;width:32px"></i> Kalibration</a>
+			<a href="/static/download.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Download_bl" style="height:26px;width:32px"></i> Download</a>
+		</div>
+	</nav>
+	<!-- Overlay effect when opening sidebar on small screens -->
+	<div class="w3-overlay w3-hide-large w3-animate-opacity" onclick="sb_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
+	<!-- !PAGE CONTENT! -->
+	<div class="w3-main" style="margin-left:185px;margin-top:45px;height:100%">
+		<div class="w3-container w3-light-grey">
+			<h4>Live Kurve</h4>
+		</div>
+		<div id="graph_div" style="position:absolute;height:84vh;width:85vw;margin-top:10px;margin-bottom:10px;z-index:1"></div>
+		<div class="w3-container" style="position:absolute;top:104vh;top:calc(84vh + 115px);width:85vw">
+			<div class="w3-half">
+				<table class="w3-table-all">
+					<tr>
+						<td><input type=checkbox id="fill" checked onClick="changeFill(this)">
+						<label for="fill">Füllen</label></td>
+						<td><b>Mittelwert:</b>
+						<input id="AvgInput" inputmode="numeric" onchange="Set_AvgVal(this.value)" size="2" maxlength="4" style="text-align:right;">
+						<label for="AvgInput">Werte</label></td>
+					</tr>
+				</table>
+			</div>
+			<div class="w3-half">
+				<table class="w3-table-all">
+					<tr>
+						<td><span><b>Intervall:</b></span>
+						<td><input type=radio id="PollShort" name="PollZeit" onClick="Set_Polltime(2)">
+						<label for="PollShort">kurz</label></td>
+						<td><input type=radio id="PollNormal" name="PollZeit" checked onClick="Set_Polltime(5)">
+						<label for="PollNormal">normal</label></td>
+						<td><input type=radio id="PollUser" name="PollZeit" onClick="Set_Polltime(userTime)">
+						<label for="PollUser">Benutzer</label></td>
+						<td><input id="PollTime" inputmode="decimal" onchange="Set_Usertime(this.value)" size="2" maxlength="5" style="text-align:right;">
+						<label for="PollTime">sec</label></td>
+					</tr>
+				</table>
+			</div>
+			<div class="w3-half">
+				<table class="w3-table-all">
+					<tr><td><b>Anzeige linke Achse:</b></td></tr>
+					<tr><td>Temp</td>
+						<td><input type=checkbox id="0" unchecked onClick="change(this)">
+							<label for="0">Akt</label></td>
+						<td></td><td></td><td></td><td></td>
+					</tr>
+					<tr><td>Wind</td>
+						<td><input type=checkbox id="1" unchecked onClick="change(this)">
+							<label for="1">Akt</label></td>
+						<td></td><td></td><td></td><td></td>
+					</tr>
+					<tr><td>Wind Mittel</td>
+						<td><input type=checkbox id="2" unchecked onClick="change(this)">
+							<label for="2">Avg10m</label></td>
+						<td><input type=checkbox id="3" unchecked onClick="change(this)">
+							<label for="3">Avg1h</label></td>
+						<td><input type=checkbox id="4" unchecked onClick="change(this)">
+							<label for="4">Avg1d</label></td>
+						<td></td><td></td>
+					</tr>
+					<tr><td>Volt</td>
+						<td><input type=checkbox id="5" unchecked onClick="change(this)">
+							<label for="5">Akt</label></td>
+						<td></td><td></td><td></td><td></td>
+					</tr>
+					<tr><td>Amps</td>
+						<td><input type=checkbox id="6" unchecked onClick="change(this)">
+							<label for="6">Akt</label></td>
+						<td></td><td></td><td></td><td></td>
+					</tr>
+					<tr><td>Watt</td>
+						<td><input type=checkbox id="7" unchecked onClick="change(this)">
+							<label for="7">Akt</label></td>
+						<td></td><td></td><td></td><td></td>
+					</tr>
+					<tr><td>Wh Tag</td>
+						<td><input type=checkbox id="8" unchecked onClick="change(this)">
+							<label for="8">BilTg</label></td>
+						<td><input type=checkbox id="9" unchecked onClick="change(this)">
+							<label for="9">ErtTg</label></td>
+						<td><input type=checkbox id="10" unchecked onClick="change(this)">
+							<label for="10">VerTg</label></td>
+						<td></td><td></td>
+					</tr>
+					<tr><td>Wh Dauer</td>
+						<td><input type=checkbox id="11" unchecked onClick="change(this)">
+							<label for="11">Bila</label></td>
+						<td><input type=checkbox id="12" unchecked onClick="change(this)">
+							<label for="12">Ertr</label></td>
+						<td><input type=checkbox id="13" unchecked onClick="change(this)">
+							<label for="13">Verb</label></td>
+						<td></td><td></td>
+					</tr>
+				</table>
+			<b>.</b>
+			</div>
+			<div class="w3-half">
+				<table class="w3-table-all">
+					<tr><td><b>Anzeige rechte Achse:</b></td></tr>
+					<tr><td>Temp</td>
+						<td><input type=checkbox id="20" unchecked onClick="change(this)">
+							<label for="20">Akt</label></td>
+						<td></td><td></td><td></td><td></td>
+					</tr>
+					<tr><td>Wind</td>
+						<td><input type=checkbox id="21" unchecked onClick="change(this)">
+							<label for="21">Akt</label></td>
+						<td></td><td></td><td></td><td></td>
+					</tr>
+					<tr><td>Wind Mittel</td>
+						<td><input type=checkbox id="22" unchecked onClick="change(this)">
+							<label for="22">Avg10m</label></td>
+						<td><input type=checkbox id="23" unchecked onClick="change(this)">
+							<label for="23">Avg1h</label></td>
+						<td><input type=checkbox id="24" unchecked onClick="change(this)">
+							<label for="24">Avg1d</label></td>
+						<td></td><td></td>
+					</tr>
+					<tr><td>Volt</td>
+						<td><input type=checkbox id="25" unchecked onClick="change(this)">
+							<label for="25">Akt</label></td>
+						<td></td><td></td><td></td><td></td>
+					</tr>
+					<tr><td>Amps</td>
+						<td><input type=checkbox id="26" unchecked onClick="change(this)">
+							<label for="26">Akt</label></td>
+						<td></td><td></td><td></td><td></td>
+					</tr>
+					<tr><td>Watt</td>
+						<td><input type=checkbox id="27" unchecked onClick="change(this)">
+							<label for="27">Akt</label></td>
+						<td></td><td></td><td></td><td></td>
+					</tr>
+					<tr><td>Wh Tag</td>
+						<td><input type=checkbox id="28" unchecked onClick="change(this)">
+							<label for="28">BilTg</label></td>
+						<td><input type=checkbox id="29" unchecked onClick="change(this)">
+							<label for="29">ErtTg</label></td>
+						<td><input type=checkbox id="30" unchecked onClick="change(this)">
+							<label for="30">VerTg</label></td>
+						<td></td><td></td>
+					</tr>
+					<tr><td>Wh Dauer</td>
+						<td><input type=checkbox id="31" unchecked onClick="change(this)">
+							<label for="31">Bila</label></td>
+						<td><input type=checkbox id="32" unchecked onClick="change(this)">
+							<label for="32">Ertr</label></td>
+						<td><input type=checkbox id="33" unchecked onClick="change(this)">
+							<label for="33">Verb</label></td>
+						<td></td><td></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+	</div>
+	<!-- End page content -->
+	<script>
+	/**
+	* @license
+	* Copyright 2018,2024 G.Weiß-Engel (info@pilogger.de)
+	* MIT-licensed (http://opensource.org/licenses/MIT)
+	*/
+	var mySidebar = document.getElementById("mySidebar");
+	var overlayBg = document.getElementById("myOverlay");
+	function sb_open() {
+		if (mySidebar.style.display === 'block') {
+			mySidebar.style.display = 'none';
+			overlayBg.style.display = "none";
+		} else {
+			mySidebar.style.display = 'block';
+			overlayBg.style.display = "block";
+		}
+	}
+	function sb_close() {
+		mySidebar.style.display = "none";
+		overlayBg.style.display = "none";
+	}
+	var data = [];
+	var WindUnit = '';
+	function get_windUnit() {
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET","/getraspiconf/", false);
+		xhr.onreadystatechange = function () {
+			if (xhr.readyState === 4) {
+				if (xhr.status === 200) {
+					var res = JSON.parse(xhr.responseText);
+					for (id in res) {
+						if (id == "UnitPulse1") {
+							WindUnit = res[id];
+						};
+					};
+					} else {
+						console.error(xhr.statusText);
+						console.log("Error processing getraspiconf");
+					}
+				}
+			};
+			xhr.send();
+		};
+	get_windUnit();
+	WindUnit1 = "Wind akt [" + WindUnit + "]";
+	WindUnit2 = "Wind 10m [" + WindUnit + "]";
+	WindUnit3 = "Wind 1h [" + WindUnit + "]";
+	WindUnit4 = "Wind 1d [" + WindUnit + "]";
+	var labelLine = ["Zeit","Temp [°C]",WindUnit1,WindUnit2,WindUnit3,WindUnit4,"Volt [V]","Amp [A]","Watt [W]","BilTg [Wh]","EtrTg [Wh]","VerTg [Wh]","Bila [Wh]","Ertr [Wh]","Verb [Wh]"];
+	function requestData() {
+		var newData = [];
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET","/data/", true);
+		xhr.onreadystatechange = function () {
+			if (xhr.readyState === 4) {
+				if (xhr.status === 200) {
+					var res = JSON.parse(xhr.responseText);
+					for (id in res) {if (id === 'PiLoTime')  {var teil = Date(res[id]);newData.push(new Date(teil))}};
+					for (id in res) {if (id === 'PiLoTemp1') {var teil = res[id].replace(/,/,'.');newData.push(parseFloat(teil))}};
+					for (id in res) {if (id === 'PiLoWind1') {var teil = res[id].replace(/,/,'.');newData.push(parseFloat(teil))}};
+					for (id in res) {if (id === 'PiLoWind10m') {var teil = res[id].replace(/,/,'.');newData.push(parseFloat(teil))}};
+					for (id in res) {if (id === 'PiLoWind1h') {var teil = res[id].replace(/,/,'.');newData.push(parseFloat(teil))}};
+					for (id in res) {if (id === 'PiLoWind1d') {var teil = res[id].replace(/,/,'.');newData.push(parseFloat(teil))}};
+					for (id in res) {if (id === 'PiLoVolt')  {var teil = res[id].replace(/,/,'.');newData.push(parseFloat(teil))}};
+					for (id in res) {if (id === 'PiLoAmps')  {var teil = res[id].replace(/,/,'.');newData.push(parseFloat(teil))}};
+					for (id in res) {if (id === 'PiLoWatt')  {var teil = res[id].replace(/,/,'.');newData.push(parseFloat(teil))}};
+					for (id in res) {if (id === 'TgEner')   {var teil = res[id].replace(/,/,'.');newData.push(parseFloat(teil))}};
+					for (id in res) {if (id === 'TgEnerE')   {var teil = res[id].replace(/,/,'.');newData.push(parseFloat(teil))}};
+					for (id in res) {if (id === 'TgEnerV')    {var teil = res[id].replace(/,/,'.');newData.push(parseFloat(teil))}};
+					for (id in res) {if (id === 'PiLoEner') {var teil = res[id].replace(/,/,'.');newData.push(parseFloat(teil))}};
+					for (id in res) {if (id === 'PiLoEnerE') {var teil = res[id].replace(/,/,'.');newData.push(parseFloat(teil))}};
+					for (id in res) {if (id === 'PiLoEnerV')  {var teil = res[id].replace(/,/,'.');newData.push(parseFloat(teil))}};
+					for (id in res) {if (id === 'Fehler') {if (res[id] != "") {Zeigefehler(res[id])}}};
+					data.push(newData);
+				} else {
+					console.error(xhr.statusText);
+					console.log("Error processing requestData");
+				}
+			}
+		};
+		xhr.send();
+	};
+
+	var polltime = 5;
+	var userTime = 5;
+	var intervalTime = polltime * 1000;
+	var g = [];
+	function drawgraph() {
+		g = new Dygraph(
+			document.getElementById("graph_div"),data,
+			{
+				axes:{y2:{labelsKMG2:true,drawGrid:true,independentTicks:true,gridLinePattern:[2,2]}},
+				labelsKMG2:true,
+				interactionModel: Dygraph.defaultInteractionModel,
+				animatedZooms:false,
+				delimiter:';',
+				digitsAfterDecimal:2,
+				rollPeriod:1,
+				showRoller:false,
+				strokeWidth:2,
+				strokeBorderWidth:1,
+				errorBars:false,
+				connectSeparatedPoints:false,
+				pointSize:3,
+				highlightCircleSize:5,
+				legend:'always',
+				labels:labelLine,
+				labelsSeparateLines:true,
+				fillGraph:true,
+				colors:['#CC0000','#000000','#EE1111','#FF6600','#2847C5','#EE1111','#000066','#2847C5','#2847C5','#004D4D','#EE1111','#2847C5','#FF6600','#EE1111'],
+				visibility:[false,false,false,false,false,false,false,false,false,false,false,false,false,false]
+			}
+		);
+		g.ready ( function() {
+			g_labels=g.getLabels();
+			if(!localStorage.getItem('LiveGraphFill')) {StoreDefaultState()};
+			SetStoredState();
+			window.intervalId = setInterval(function() {
+				requestData();
+				setTimeout(() => {g.updateOptions( { 'file': data } );},700);
+			}, intervalTime);
+		});
+	}
+	function change(el) {
+		reihe = parseInt(el.id);
+		VisTraces = localStorage.getItem('LiveGraphTraces');
+		TracesVis = Array.from(VisTraces);
+		if (reihe < 20) {
+			reiheTag = g_labels[reihe+1];
+			g.setVisibility(reihe,el.checked);
+			if (el.checked) {
+				g.updateOptions({series:{[reiheTag]:{axis:'y',strokePattern:null}}});
+				document.getElementById(reihe+20).checked = false;
+				TracesVis[reihe+20] = '_';
+				TracesVis[reihe] = 'I';
+			} else {
+				TracesVis[reihe] = '_';
+			}
+		} else {
+			reiheTag = g_labels[reihe-19];
+			g.setVisibility(reihe-20,el.checked);
+			if (el.checked) {
+				g.updateOptions({series:{[reiheTag]:{axis:'y2',strokePattern:[2,1]}}});
+				document.getElementById(reihe-20).checked = false;
+				TracesVis[reihe-20] = '_';
+				TracesVis[reihe] = 'I';
+			} else {
+				g.updateOptions({series:{[reiheTag]:{axis:'y',strokePattern:null}}});
+				TracesVis[reihe] = '_';
+			}
+		}
+		VisTraces = TracesVis.join('');
+		localStorage.setItem('LiveGraphTraces',(VisTraces));
+	}
+	function changeFill(el) {
+		g.updateOptions({fillGraph: (el.checked)});
+		localStorage.setItem('LiveGraphFill', (el.checked));
+	}
+	function Set_AvgVal(uv) {
+		ov = AvgVal;
+		uv = uv.replace(/,/,".");
+		AvgVal = parseInt(uv);
+		if (AvgVal < 1 || AvgVal > 1000) {
+			AvgVal = ov;
+			document.getElementById("AvgInput").style.backgroundColor = "#ff4c4c";
+		}else{
+			document.getElementById("AvgInput").style.backgroundColor = "";
+		};
+		g.updateOptions({rollPeriod: AvgVal});
+		document.getElementById('AvgInput').value = AvgVal;
+		localStorage.setItem('LiveAvgVal', AvgVal);
+	}
+	function SetStoredState() {
+		GFill = (localStorage.getItem('LiveGraphFill')==='true');
+		document.getElementById('fill').checked = GFill;
+		AvgVal = parseInt(localStorage.getItem('LiveAvgVal'));
+		document.getElementById('AvgInput').value = AvgVal;
+		g.updateOptions({fillGraph: GFill, rollPeriod: AvgVal});
+		polltime = parseFloat(localStorage.getItem('LivePollTime'));
+		Set_Polltime(polltime);
+		switch (polltime) {
+			case 2 : document.getElementById('PollShort').checked = true; break;
+			case 5 : document.getElementById('PollNormal').checked = true; break;
+			default : document.getElementById('PollUser').checked = true;
+		}
+		TracesVis = localStorage.getItem('LiveGraphTraces');
+		for (let r=0;r<=13;r++) {
+			if (TracesVis[r] == 'I') {
+				var reiheTag = g_labels[r+1];
+				g.updateOptions({series:{[reiheTag]:{axis:'y',strokePattern:null}}});
+				g.setVisibility(r,true);
+				document.getElementById(r).checked = true;
+			}
+		}
+		for (let r=20;r<=33;r++) {
+			if (TracesVis[r] == 'I') {
+				var reiheTag = g_labels[r-19];
+				g.updateOptions({series:{[reiheTag]:{axis:'y2',strokePattern:[2,1]}}});
+				g.setVisibility(r-20,true);
+				document.getElementById(r).checked = true;
+			}
+		}
+	}
+	function StoreDefaultState() {
+		localStorage.setItem('LiveGraphFill', false);
+		localStorage.setItem('LiveAvgVal', '1');
+		localStorage.setItem('LivePollTime', '5');
+		localStorage.setItem('LiveGraphTraces', 'I________________________________');
+	}
+	function Set_Polltime(tv) {
+		if (tv <= 120 && tv >= 1) {
+			polltime = tv;
+			intervalTime = tv*1000;
+			document.getElementById('PollTime').value = polltime;
+			localStorage.setItem('LivePollTime', polltime);
+			clearInterval(window.intervalId);
+			window.intervalId = setInterval(function() {
+				requestData();
+				setTimeout(() => {g.updateOptions( { 'file': data } );},700);
+			}, intervalTime);
+		}
+	}
+	function Set_Usertime(uv) {
+		ov = userTime;
+		uv = uv.replace(/,/,".");
+		userTime = parseFloat(uv);
+		if (userTime < 1 || userTime > 120) {
+			userTime = ov;
+			document.getElementById("PollTime").style.backgroundColor = "#ff4c4c";
+		}else{
+			document.getElementById("PollTime").style.backgroundColor = "";
+		};
+		document.getElementById('PollUser').checked = true;
+		Set_Polltime(userTime);
+	}
+	document.getElementById('PollTime').value = polltime;
+	clearTimeout();
+	requestData();
+	setTimeout(() => {drawgraph();},700);
+	</script>
+</body>
+</html>

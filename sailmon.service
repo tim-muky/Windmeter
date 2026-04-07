@@ -1,0 +1,22 @@
+[Unit]
+Description=SailMon – Sailing Instrument Monitor
+Documentation=https://github.com/yourname/sailmon
+After=network.target gpsd.service pilo-webmon.service
+Wants=gpsd.service pilo-webmon.service
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/sailmon
+ExecStart=/home/pi/sailmon/.venv/bin/python3 /home/pi/sailmon/main.py
+Restart=on-failure
+RestartSec=5s
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sailmon
+
+# Ensure the service can access GPIO and serial devices
+SupplementaryGroups=gpio spi i2c dialout
+
+[Install]
+WantedBy=multi-user.target

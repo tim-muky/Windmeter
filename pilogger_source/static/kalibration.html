@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<title>PiLogger Kalibration</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="/static/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon"/>
+<link href="/static/w3_pilo.css" rel="stylesheet"/>
+
+<body class="w3-border-blue-grey">
+	<!-- Top container -->
+	<div class="w3-bar w3-top w3-indigo w3-large" style="z-index:4">
+		<button class="w3-bar-item w3-button w3-hide-large w3-hover-none w3-hover-text-light-grey" onclick="sb_open();">
+			<a class="Icon_Menu_wh" style="height:26px;width:26px"></a> Menu</button>
+		<span class="w3-bar-item">PiLogger</span>
+		<span class="w3-bar-item w3-right"><i class="Icon_Logo" class="w3-margin-right" style="height:26px;width:33px"></i></span>
+	</div>
+	<!-- Sidebar/menu -->
+	<nav class="w3-sidebar w3-collapse w3-pale-blue w3-animate-left" style="z-index:3;width:180px;" id="mySidebar">
+		<div class="w3-container">
+			<h5>Menu</h5>
+		</div>
+		<div class="w3-bar-block">
+			<a href="#" class="w3-bar-item w3-button w3-padding-16 w3-hide-large w3-dark-grey w3-hover-black" onclick="sb_close()" title="close menu"><i class="Icon_Close_wh" style="height:26px;width:26px"></i> Close Menu</a>
+			<a href="/" class="w3-bar-item w3-button w3-padding"><i class="Icon_Live_bl" style="height:26px;width:32px"></i> Live Werte</a>
+			<a href="/static/livechart.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_ChartL_bl" style="height:26px;width:32px"></i> Live Kurve</a>
+			<a href="/static/diagramme.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Chart_bl" style="height:26px;width:32px"></i> Diagramme</a>
+			<a href="/static/einstell1.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Einstell_bl" style="height:26px;width:32px"></i> Einstellungen 1</a>
+			<a href="/static/einstell2.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Wrench_bl" style="height:26px;width:32px"></i> Einstellungen 2</a>
+			<a href="#" class="w3-bar-item w3-button w3-padding w3-blue"><i class="Icon_Waage_bl" style="height:26px;width:32px"></i> Kalibration</a>
+			<a href="/static/download.html" class="w3-bar-item w3-button w3-padding"><i class="Icon_Download_bl" style="height:26px;width:32px"></i> Download</a>
+		</div>
+	</nav>
+	<!-- Overlay effect when opening sidebar on small screens -->
+	<div class="w3-overlay w3-hide-large w3-animate-opacity" onclick="sb_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
+	<!-- !PAGE CONTENT! -->
+	<div class="w3-main" style="margin-left:185px;margin-top:45px;">
+		<div class="w3-container w3-light-grey">
+			<h4>Kalibration</h4>
+		</div>
+		<div class="w3-table-all" style="font-size:90%"><table>
+			<tr><td><b>Temperatur<br>Korrekturwerte </b></td><td><br><b>Ist</b></td><td> </td><td><br><b>Soll</b></td><td><br><b>Eingabe</b></td></tr>
+			<tr><td>Offset NTC</td><td><span id="OffsetNTC"></td><td>°C</td><td><span id="nOffsetNTC"></td><td>
+				<input id="iOffsetNTC" inputmode="decimal" onchange="Set_OffsetNTC(this.value)" size="7" maxlength="7"></td></tr>
+			<tr><td>Faktor NTC</td><td><span id="FactorNTC"></td><td> </td><td><span id="nFactorNTC"></td><td>
+				<input id="iFactorNTC" inputmode="decimal" onchange="Set_FactorNTC(this.value)" size="7" maxlength="7"></td></tr>
+			<tr><td>Offset PTC</td><td><span id="OffsetPTC"></td><td>°C</td><td><span id="nOffsetPTC"></td><td>
+				<input id="iOffsetPTC" inputmode="decimal" onchange="Set_OffsetPTC(this.value)" size="7" maxlength="7"></td></tr>
+			<tr><td>Faktor PTC</td><td><span id="FactorPTC"></td><td> </td><td><span id="nFactorPTC"></td><td>
+				<input id="iFactorPTC" inputmode="decimal" onchange="Set_FactorPTC(this.value)" size="7" maxlength="7"></td></tr>
+			</table>
+		</div>
+		<div class="w3-container w3-light-grey" style="font-size:90%">
+			<p><b>Warnung</b><br>
+			Bevor Sie die nachfolgenden Korrekturmöglichkeiten verwenden, sollten Sie folgendes bedenken:<br>
+			- Für die Strommessung führen Sie unbedingt vorher den Nullpunktabgleich 'Amp-Zero'<br>
+			&emsp;unter 'Einstellungen 1' durch.<br>
+			- Abweichungen größer &plusmn;2% sind ein Hinweis auf Aufbauprobleme:<br>
+			&emsp;Zu schwach dimensionierte Kabel und/oder ungewollte Masseströme können Ursache für Brandgefahr sein.<br>
+			- Die nachträgliche Korrektur der Leistungswerte verringert deren Genauigkeit und die der Energiezähler.</p>
+		</div>
+		<div class="w3-table-all" style="font-size:90%"><table>
+			<tr><td><b>Spannung/Strom<br>Korrekturwerte</b></td><td><br><b>Ist</b></td><td> </td><td><br><b>Soll</b></td><td><br><b>Eingabe</b></td></tr>
+			<tr><td>Volt/Amp Korrektur<br>Aktivieren</td><td><span id="DoVAcorr"></td><td> </td><td><span id="nDoVAcorr"></td><td>
+				<label><select onchange="Set_VAcorr(this.value)">
+					<option value='nil'> </option>
+					<option value='true'>ja</option>
+					<option value='false'>nein</option>
+			</td></tr>
+			<tr><td>Offset Spannung</td><td><span id="OffsetVolt"></td><td>V</td><td><span id="nOffsetVolt"></td><td>
+				<input id="iOffsetVolt" inputmode="decimal" onchange="Set_OffsetVolt(this.value)" size="7" maxlength="7"></td></tr>
+			<tr><td>Faktor Spannung</td><td><span id="FactorVolt"></td><td> </td><td><span id="nFactorVolt"></td><td>
+				<input id="iFactorVolt" inputmode="decimal" onchange="Set_FactorVolt(this.value)" size="7" maxlength="7"></td></tr>
+			<tr><td>Offset Strom</td><td><span id="OffsetAmp"></td><td>A</td><td><span id="nOffsetAmp"></td><td>
+				<input id="iOffsetAmp" inputmode="decimal" onchange="Set_OffsetAmp(this.value)" size="7" maxlength="7"></td></tr>
+			<tr><td>Faktor Strom</td><td><span id="FactorAmp"></td><td> </td><td><span id="nFactorAmp"></td><td>
+				<input id="iFactorAmp" inputmode="decimal" onchange="Set_FactorAmp(this.value)" size="7" maxlength="7"></td></tr>
+			</table>
+		</div>
+		<div class="w3-panel pL-button" id="Send-button" onClick="send_CalConf()">Speichern</div>
+		<div class="w3-panel pL-button w3-yellow w3-padding" id="Default-button" onClick="Set_default()">Zurücksetzen</div>
+		<!-- End page content -->
+	</div>
+	<script>
+	/**
+	* @license
+	* Copyright 2018, 2024 G.Weiß-Engel (info@pilogger.de)
+	* MIT-licensed (http://opensource.org/licenses/MIT)
+	*/
+
+	var mySidebar = document.getElementById("mySidebar");
+	var overlayBg = document.getElementById("myOverlay");
+	function sb_open() {
+		if (mySidebar.style.display === 'block') {
+			mySidebar.style.display = 'none';
+			overlayBg.style.display = "none";
+		} else {
+			mySidebar.style.display = 'block';
+			overlayBg.style.display = "block";
+		}
+	}
+	function sb_close() {
+		mySidebar.style.display = "none";
+		overlayBg.style.display = "none";
+	}
+
+	var SetVAcorr,SetOffsetVolt,SetFactorVolt,SetOffsetAmp,SetFactorAmp,SetOffsetNTC,SetFactorNTC,SetOffsetPTC,SetFactorPTC;
+
+	function get_CalConf() {
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET","/getcalconf/", true);
+		xhr.onreadystatechange = function () {
+			if (xhr.readyState === 4) {
+				if (xhr.status === 200) {
+					var res = JSON.parse(xhr.responseText);
+					for (id in res) {
+						if (id == "DoVAcorr") {
+							if (res[id] == true) {
+								SetVAcorr = "true"
+								document.getElementById("DoVAcorr").innerHTML = "ja";
+								document.getElementById("nDoVAcorr").innerHTML = "ja";
+							} else {
+								SetVAcorr = "false"
+								document.getElementById("DoVAcorr").innerHTML = "nein";
+								document.getElementById("nDoVAcorr").innerHTML = "nein";
+							}
+						};
+						if (id == "VoltOffset") {
+							SetOffsetVolt = parseFloat(res[id]);
+							document.getElementById("OffsetVolt").innerHTML = SetOffsetVolt.toFixed(4);
+							document.getElementById("nOffsetVolt").innerHTML = SetOffsetVolt.toFixed(4);
+						};
+						if (id == "VoltFactor") {
+							SetFactorVolt = parseFloat(res[id]);
+							document.getElementById("FactorVolt").innerHTML = SetFactorVolt.toFixed(5);
+							document.getElementById("nFactorVolt").innerHTML = SetFactorVolt.toFixed(5);
+						};
+						if (id == "AmpOffset") {
+							SetOffsetAmp = parseFloat(res[id]);
+							document.getElementById("OffsetAmp").innerHTML = SetOffsetAmp.toFixed(4);
+							document.getElementById("nOffsetAmp").innerHTML = SetOffsetAmp.toFixed(4);
+						};
+						if (id == "AmpFactor") {
+							SetFactorAmp = parseFloat(res[id]);
+							document.getElementById("FactorAmp").innerHTML = SetFactorAmp.toFixed(5);
+							document.getElementById("nFactorAmp").innerHTML = SetFactorAmp.toFixed(5);
+						};
+						if (id == "NtcOffset") {
+							SetOffsetNTC = parseFloat(res[id]);
+							document.getElementById("OffsetNTC").innerHTML = SetOffsetNTC.toFixed(2);
+							document.getElementById("nOffsetNTC").innerHTML = SetOffsetNTC.toFixed(2);
+						};
+						if (id == "NtcFactor") {
+							SetFactorNTC = parseFloat(res[id]);
+							document.getElementById("FactorNTC").innerHTML = SetFactorNTC.toFixed(4);
+							document.getElementById("nFactorNTC").innerHTML = SetFactorNTC.toFixed(4);
+						};
+						if (id == "PtcOffset") {
+							SetOffsetPTC = parseFloat(res[id]);
+							document.getElementById("OffsetPTC").innerHTML = SetOffsetPTC.toFixed(2);
+							document.getElementById("nOffsetPTC").innerHTML = SetOffsetPTC.toFixed(2);
+						};
+						if (id == "PtcFactor") {
+							SetFactorPTC = parseFloat(res[id]);
+							document.getElementById("FactorPTC").innerHTML = SetFactorPTC.toFixed(4);
+							document.getElementById("nFactorPTC").innerHTML = SetFactorPTC.toFixed(4);
+						};
+					};
+				} else {
+					console.error(xhr.statusText);
+					console.log("Error processing getcalconf");
+				}
+			}
+		};
+		xhr.send();
+	}
+
+	function send_CalConf() {
+		var xhr = new XMLHttpRequest();
+		var urldata = "/sendcalconf?";
+		urldata += ("DoVAcorr="+SetVAcorr);
+		urldata += ("&VoltOffset="+SetOffsetVolt);
+		urldata += ("&VoltFactor="+SetFactorVolt);
+		urldata += ("&AmpOffset="+SetOffsetAmp);
+		urldata += ("&AmpFactor="+SetFactorAmp);
+		urldata += ("&NtcOffset="+SetOffsetNTC);
+		urldata += ("&NtcFactor="+SetFactorNTC);
+		urldata += ("&PtcOffset="+SetOffsetPTC);
+		urldata += ("&PtcFactor="+SetFactorPTC);
+		xhr.onreadystatechange = function() {
+			if (this.readyState == 4) {
+				var element = document.getElementById("Send-button");
+				if (this.responseText == "ok") {
+					element.classList.add("success");
+					setTimeout(function () {element.classList.remove("success")},2000);
+				}else{
+					console.error(xhr.statusText);
+					console.log("Fehler @ Send_CalConf");
+					element.classList.add("fail");
+					setTimeout(function () {element.classList.remove("fail")},2000);
+				}
+				get_CalConf();
+			}
+		};
+		xhr.open("GET",urldata,true);
+		xhr.send();
+	}
+
+	window.onload = function() {
+		get_CalConf();
+	}
+
+	function Set_default() {
+		SetVAcorr = false;
+		SetOffsetVolt = 0.0;
+		SetFactorVolt = 1.0;
+		SetOffsetAmp = 0.0;
+		SetFactorAmp = 1.0;
+		SetOffsetNTC = 0.0;
+		SetFactorNTC = 1.0;
+		SetOffsetPTC = 0.0;
+		SetFactorPTC = 1.0;
+		send_CalConf();
+	}
+
+	function Set_VAcorr(newval) {
+		if (newval == "true") {
+			SetVAcorr = true;
+			document.getElementById("nDoVAcorr").innerHTML = "ja";
+		}
+		if (newval == "false") {
+			SetVAcorr = false;
+			document.getElementById("nDoVAcorr").innerHTML = "nein";
+		}
+	}
+	function Set_OffsetVolt(newval) {
+		newval = newval.replace(/,/,".");
+		SetOffsetVolt = parseFloat(newval);
+		document.getElementById("nOffsetVolt").innerHTML = SetOffsetVolt;
+	}
+	function Set_FactorVolt(newval) {
+		newval = newval.replace(/,/,".");
+		SetFactorVolt = newval;
+		document.getElementById("nFactorVolt").innerHTML = SetFactorVolt;
+	}
+	function Set_OffsetAmp(newval) {
+		newval = newval.replace(/,/,".");
+		SetOffsetAmp = parseFloat(newval);
+		document.getElementById("nOffsetAmp").innerHTML = SetOffsetAmp;
+	}
+	function Set_FactorAmp(newval) {
+		newval = newval.replace(/,/,".");
+		SetFactorAmp = parseFloat(newval);
+		document.getElementById("nFactorAmp").innerHTML = SetFactorAmp;
+	}
+	function Set_OffsetNTC(newval) {
+		newval = newval.replace(/,/,".");
+		SetOffsetNTC = parseFloat(newval);
+		document.getElementById("nOffsetNTC").innerHTML = SetOffsetNTC;
+	}
+	function Set_FactorNTC(newval) {
+		newval = newval.replace(/,/,".");
+		SetFactorNTC = newval;
+		document.getElementById("nFactorNTC").innerHTML = SetFactorNTC;
+	}
+	function Set_OffsetPTC(newval) {
+		newval = newval.replace(/,/,".");
+		SetOffsetPTC = parseFloat(newval);
+		document.getElementById("nOffsetPTC").innerHTML = SetOffsetPTC;
+	}
+	function Set_FactorPTC(newval) {
+		newval = newval.replace(/,/,".");
+		SetFactorPTC = parseFloat(newval);
+		document.getElementById("nFactorPTC").innerHTML = SetFactorPTC;
+	}
+	</script>
+</body>
+</html>
