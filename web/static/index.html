@@ -5,10 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>SailMon</title>
 
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <!-- Hand-drawn display font (loads when online; Impact fallback works offline) -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" />
+  <!-- Leaflet CSS (vendored locally for offline use) -->
+  <link rel="stylesheet" href="/static/leaflet/leaflet.css" />
   <!-- App CSS -->
   <link rel="stylesheet" href="/static/style.css" />
 </head>
@@ -82,8 +80,8 @@
     </div>
   </div>
 
-  <!-- Leaflet JS -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Leaflet JS (vendored locally for offline use) -->
+  <script src="/static/leaflet/leaflet.js"></script>
   <!-- App JS -->
   <script src="/static/app.js"></script>
 </body>

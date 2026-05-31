@@ -16,7 +16,11 @@ Tile counts by zoom level (approx):
   z12  →    16 tiles
   z14  →   256 tiles
   z16  → 4 096 tiles
-  Total ≈ 4 500 tiles × 2 layers ≈ ~25 MB
+  z17  → 16 384 tiles
+  Total ≈ 21 000 tiles × 2 layers ≈ ~100 MB
+
+NOTE: z17 is included because config.MAP_DEFAULT_ZOOM is 17 — without it the
+map opens blank at its default zoom when offline.
 """
 
 import math
@@ -34,7 +38,7 @@ BBOX = {
     "lon_max": 13.80,
 }
 
-ZOOM_LEVELS = range(10, 17)   # z10..z16 inclusive
+ZOOM_LEVELS = range(10, 18)   # z10..z17 inclusive (z17 = config.MAP_DEFAULT_ZOOM)
 
 LAYERS = {
     "osm":      "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
