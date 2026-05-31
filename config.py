@@ -51,8 +51,9 @@ OSM_TILE_URL         = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
 OPENSEA_TILE_URL     = "https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png"
 TILE_USER_AGENT      = "SailMon/1.0 (personal sailing instrument)"
 
-# Default map zoom level (17 = good street/harbour detail for OpenSeaMap)
-MAP_DEFAULT_ZOOM     = 17
+# Default map zoom level (16 = good street/harbour detail; matches max cached
+# tile zoom in scripts/download_tiles.py so the map is never blank offline)
+MAP_DEFAULT_ZOOM     = 16
 
 # ─── Trip Detection ───────────────────────────────────────────────────────────
 TRIP_START_KNOTS     = 0.5        # start a new trip once speed exceeds this
