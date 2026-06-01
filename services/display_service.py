@@ -1,7 +1,8 @@
 """
 Display Service
 ===============
-Sends wind-speed and boat-speed data (with 30-second trend) to the
+Sends wind-speed and boat-speed data (with a configurable trend window,
+see config.TREND_WINDOW_SEC) to the
 Raspberry Pi PICO over USB serial.  The PICO drives two MAX7219 4-in-1
 8×8 LED dot-matrix display modules via SPI.
 
@@ -38,12 +39,15 @@ _speed_hist: deque = deque(maxlen=120)
 
 
 def _calc_trend(history: deque, current: Optional[float],
-                window: float = 30.0) -> int:
+                window: Optional[float] = None) -> int:
     """
     Compare current value to the oldest reading within the last `window`
     seconds.  Returns 1 (rising), -1 (falling), or 0 (stable).
-    Threshold is taken from config.TREND_THRESHOLD_KN.
+    Window defaults to config.TREND_WINDOW_SEC; threshold is
+    config.TREND_THRESHOLD_KN.
     """
+    if window is None:
+        window = config.TREND_WINDOW_SEC
     now = time.monotonic()
     if current is not None:
         history.append((now, current))

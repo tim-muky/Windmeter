@@ -31,8 +31,11 @@ PICO_SERIAL_PORT     = "/dev/ttyACM0"   # adjust if GPS takes ttyACM0
 PICO_BAUD_RATE       = 115200
 DISPLAY_ENABLED      = True             # set False for dev without hardware
 
-# Trend indicator threshold: change > this value in 30 s = trending up/down
+# Trend indicator: arrow rises/falls when the value changes by more than
+# TREND_THRESHOLD_KN knots over the last TREND_WINDOW_SEC seconds.
+# Shorter window = arrow reacts faster but flickers more in gusty wind.
 TREND_THRESHOLD_KN   = 0.5
+TREND_WINDOW_SEC     = 10.0
 
 # ─── Web Server ───────────────────────────────────────────────────────────────
 WEB_HOST             = "0.0.0.0"
