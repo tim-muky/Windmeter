@@ -65,7 +65,10 @@ function connectWS() {
     if (d.trip_id && d.trip_id !== state.trip_id) {
       // New trip started – reset track and load initial positions
       liveTrackCoords = [];
-      if (livePolyline) livePolyline.setLatLngs([]);
+      liveSamples     = [];
+      liveLastSampleT = null;
+      if (livePolyline)    livePolyline.setLatLngs([]);
+      if (liveRibbonLayer) liveRibbonLayer.clearLayers();
       loadInitialTrack(d.trip_id);
     }
     state.trip_id = d.trip_id;
@@ -105,12 +108,113 @@ function updateHeader() {
   elSpeedTrend.textContent = trendArrow(st);
 }
 
+// ── Speed ribbon ────────────────────────────────────────────────────────────
+// A two-sided band drawn along the course spine: wind speed on the left
+// (green), boat speed on the right (orange). Each segment spans one sample
+// interval; the band's perpendicular width = speed × RIBBON_M_PER_KN metres,
+// so it's geo-anchored and zooms with the chart.
+const RIBBON_INTERVAL_S = 30;        // seconds per ribbon segment
+const RIBBON_M_PER_KN   = 8;         // metres of band width per knot
+const RIBBON_WIND_COLOR = '#3a9d4e'; // green  – wind side (left of travel)
+const RIBBON_BOAT_COLOR = '#e8641e'; // orange – boat side (right of travel)
+const R_EARTH_M = 6371000;
+
+const _toRad = d => d * Math.PI / 180;
+const _toDeg = r => r * 180 / Math.PI;
+
+// Initial bearing (deg) from point a [lat,lon] to point b [lat,lon].
+function _bearing(a, b) {
+  const φ1 = _toRad(a[0]), φ2 = _toRad(b[0]);
+  const Δλ = _toRad(b[1] - a[1]);
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  return (_toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
+// Point reached from [lat,lon] travelling distM metres along bearing brngDeg.
+function _destPoint(lat, lon, brngDeg, distM) {
+  const δ = distM / R_EARTH_M, θ = _toRad(brngDeg);
+  const φ1 = _toRad(lat), λ1 = _toRad(lon);
+  const sinφ2 = Math.sin(φ1) * Math.cos(δ) + Math.cos(φ1) * Math.sin(δ) * Math.cos(θ);
+  const φ2 = Math.asin(sinφ2);
+  const λ2 = λ1 + Math.atan2(
+    Math.sin(θ) * Math.sin(δ) * Math.cos(φ1),
+    Math.cos(δ) - Math.sin(φ1) * sinφ2,
+  );
+  return [_toDeg(φ2), ((_toDeg(λ2) + 540) % 360) - 180];
+}
+
+// Downsample raw measurement rows to one sample per `intervalS` seconds.
+// Returns [{lat, lon, wind, boat}].
+function sampleTrack(rows, intervalS) {
+  const out = [];
+  let lastT = null;
+  for (const r of rows) {
+    if (r.latitude == null || r.longitude == null) continue;
+    const t = new Date(r.timestamp).getTime() / 1000;
+    if (lastT === null || (t - lastT) >= intervalS) {
+      out.push({ lat: r.latitude, lon: r.longitude,
+                 wind: r.wind_kn || 0, boat: r.speed_kn || 0 });
+      lastT = t;
+    }
+  }
+  return out;
+}
+
+// Circular mean of two bearings (deg); passes through a single non-null one.
+function _meanBearing(a, b) {
+  if (a === null) return b;
+  if (b === null) return a;
+  const x = Math.cos(_toRad(a)) + Math.cos(_toRad(b));
+  const y = Math.sin(_toRad(a)) + Math.sin(_toRad(b));
+  return (_toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
+// Draw the two-sided ribbon for `samples` into `container` (a map or layerGroup).
+// Offsets are taken at each vertex's averaged normal so neighbouring segments
+// share edges → a continuous band with clean dividers, even through turns.
+function addRibbonSegments(container, samples) {
+  const n = samples ? samples.length : 0;
+  if (n < 2) return;
+
+  // Averaged travel bearing at each vertex
+  const brngAt = new Array(n);
+  for (let i = 0; i < n; i++) {
+    const a = [samples[i].lat, samples[i].lon];
+    const bIn  = i > 0     ? _bearing([samples[i-1].lat, samples[i-1].lon], a) : null;
+    const bOut = i < n - 1 ? _bearing(a, [samples[i+1].lat, samples[i+1].lon]) : null;
+    brngAt[i] = _meanBearing(bIn, bOut);
+  }
+
+  // Offset point on each side per vertex (width ∝ speed)
+  const windPt = new Array(n), boatPt = new Array(n);
+  for (let i = 0; i < n; i++) {
+    windPt[i] = _destPoint(samples[i].lat, samples[i].lon, brngAt[i] - 90, samples[i].wind * RIBBON_M_PER_KN);
+    boatPt[i] = _destPoint(samples[i].lat, samples[i].lon, brngAt[i] + 90, samples[i].boat * RIBBON_M_PER_KN);
+  }
+
+  for (let i = 0; i < n - 1; i++) {
+    const pa = [samples[i].lat, samples[i].lon];
+    const pb = [samples[i + 1].lat, samples[i + 1].lon];
+    L.polygon([pa, pb, windPt[i + 1], windPt[i]], {   // wind band (green)
+      color: RIBBON_WIND_COLOR, weight: 1, opacity: 0.7,
+      fillColor: RIBBON_WIND_COLOR, fillOpacity: 0.40,
+    }).addTo(container);
+    L.polygon([pa, pb, boatPt[i + 1], boatPt[i]], {   // boat band (orange)
+      color: RIBBON_BOAT_COLOR, weight: 1, opacity: 0.7,
+      fillColor: RIBBON_BOAT_COLOR, fillOpacity: 0.40,
+    }).addTo(container);
+  }
+}
+
 // ── Live Map ──────────────────────────────────────────────────────────────────
-let liveMap, livePolyline, liveMarker;
+let liveMap, livePolyline, liveMarker, liveRibbonLayer;
 let liveTrackCoords = [];
+let liveSamples     = [];     // [{lat, lon, wind, boat}] at RIBBON_INTERVAL_S
+let liveLastSampleT = null;   // epoch seconds of last ribbon sample
 let mapFollowing    = true;
 
-const MAP_DEFAULT_ZOOM = 17;
+const MAP_DEFAULT_ZOOM = 16;  // matches config.MAP_DEFAULT_ZOOM / cached tiles
 const PAN_STEP_PX      = 100;   // pixels per pan-button press
 
 function initMap() {
@@ -142,6 +246,9 @@ function initMap() {
     dashArray:   '6, 8',
     lineJoin:    'round',
   }).addTo(liveMap);
+
+  // Speed ribbon (wind/boat bands along the track)
+  liveRibbonLayer = L.layerGroup().addTo(liveMap);
 
   // Boat marker – red filled arrow (SVG icon, rotates to heading)
   liveMarker = L.marker([52.52, 13.40], {
@@ -185,6 +292,20 @@ function updateMapLive() {
   liveMarker.setLatLng(ll);
   liveTrackCoords.push(ll);
   livePolyline.setLatLngs(liveTrackCoords);
+
+  // Add a ribbon sample every RIBBON_INTERVAL_S seconds and redraw the band
+  const now = Date.now() / 1000;
+  if (liveLastSampleT === null || (now - liveLastSampleT) >= RIBBON_INTERVAL_S) {
+    liveSamples.push({
+      lat:  g.lat,
+      lon:  g.lon,
+      wind: (state.wind.ok && state.wind.kn != null) ? state.wind.kn : 0,
+      boat: (g.sog != null) ? g.sog : 0,
+    });
+    liveLastSampleT = now;
+    liveRibbonLayer.clearLayers();
+    addRibbonSegments(liveRibbonLayer, liveSamples);
+  }
 
   if (mapFollowing) {
     liveMap.panTo(ll, { animate: true, duration: 0.5 });
@@ -361,14 +482,10 @@ async function openTripModal(tripId) {
     const track = data.track;
     if (track && track.length > 0) {
       const coords = track.map(p => [p.latitude, p.longitude]);
-      // Speed-coloured track
-      for (let i = 0; i < coords.length - 1; i++) {
-        L.polyline([coords[i], coords[i + 1]], {
-          color:   speedColor(track[i].speed_kn || 0, 0, 8),
-          weight:  3,
-          opacity: 0.9,
-        }).addTo(modalMap);
-      }
+      // Course spine
+      L.polyline(coords, { color: '#333', weight: 2, opacity: 0.9 }).addTo(modalMap);
+      // Two-sided speed ribbon (wind=green left, boat=orange right)
+      addRibbonSegments(modalMap, sampleTrack(track, RIBBON_INTERVAL_S));
       L.circleMarker(coords[0],               { radius: 6, color: '#00e5b0', fillColor: '#00e5b0', fillOpacity: 1 }).addTo(modalMap);
       L.circleMarker(coords[coords.length-1], { radius: 6, color: '#e00000', fillColor: '#e00000', fillOpacity: 1 }).addTo(modalMap);
       modalMap.fitBounds(L.latLngBounds(coords), { padding: [20, 20] });
@@ -395,13 +512,6 @@ function fmtDurFromISO(start, end) {
   const h = Math.floor(sec / 3600);
   const m = Math.floor((sec % 3600) / 60);
   return h > 0 ? `${h}h ${m}min` : `${m}min`;
-}
-
-function speedColor(spd, min, max) {
-  const t = Math.min(1, Math.max(0, (spd - min) / (max - min)));
-  const r = Math.round(255 * Math.min(1, t * 2));
-  const g = Math.round(255 * Math.min(1, 2 - t * 2));
-  return `rgb(${r},${g},40)`;
 }
 
 function esc(s) {
