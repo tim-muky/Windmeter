@@ -11,13 +11,9 @@ env/
 dist/
 build/
 
-# Runtime data (generated at runtime – do not commit)
-data/sailmon.db
-data/gpx/
-data/tiles/
-
-# Logs
+# Logs / SD card dumps (don't commit recorded tracks)
 *.log
+WIND_*.csv
 
 # OS / editor
 .DS_Store

@@ -1,7 +1,0 @@
-[Desktop Entry]
-Name=PiLogger
-Type=Application
-Path=/home/pi/PiLogger
-Icon=/home/pi/PiLogger/Logo_PiLogger_Icon.png
-Exec=/usr/bin/python3 PiLogger.py
-Terminal=False

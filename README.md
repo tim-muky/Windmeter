@@ -19,9 +19,9 @@ power-bank power. No on-boat web interface; trips are reviewed at home.
 
 Start at [`pico_logger/README.md`](pico_logger/README.md) for the build.
 
-## V2 — Raspberry Pi "SailMon" (legacy)
+## History
 
-The previous Raspberry Pi 4B implementation (polled a PiLogger WebMonitor for
-wind, gpsd for GPS, SQLite + a live Leaflet web UI) lives in `main.py`,
-`config.py`, `services/`, and `web/`. It's superseded by V3 but kept for
-reference — the web map and GPX logic were reused in the V3 viewer.
+V3 replaces an earlier Raspberry Pi 4B rig ("SailMon" — a PiLogger pulse head
+for wind, gpsd for GPS, SQLite, and a live Leaflet web UI) that was lost
+overboard. That codebase has been removed; its speed-ribbon map visualisation
+lives on in the V3 viewer.
