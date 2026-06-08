@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Windmeter Viewer</title>
+  <link rel="stylesheet" href="./leaflet/leaflet.css">
+  <style>
+    :root { --bg:#0e1620; --panel:#16212e; --ink:#e6edf3; --muted:#8a9bb0;
+            --wind:#3a9d4e; --boat:#e8641e; --accent:#00e5b0; }
+    * { box-sizing: border-box; }
+    html, body { margin:0; height:100%; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+                 background:var(--bg); color:var(--ink); }
+    #app { display:flex; flex-direction:column; height:100%; }
+    header { display:flex; align-items:center; gap:18px; padding:10px 16px;
+             background:var(--panel); border-bottom:1px solid #243245; flex-wrap:wrap; }
+    header h1 { font-size:16px; margin:0; font-weight:600; letter-spacing:.3px; }
+    header h1 span { color:var(--accent); }
+    .stat { display:flex; flex-direction:column; line-height:1.15; }
+    .stat .v { font-size:18px; font-weight:700; }
+    .stat .l { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+    .stat.wind .v { color:var(--wind); }
+    .stat.boat .v { color:var(--boat); }
+    .spacer { flex:1; }
+    label.btn { background:var(--accent); color:#04221b; font-weight:700; font-size:13px;
+                padding:8px 14px; border-radius:8px; cursor:pointer; }
+    label.btn input { display:none; }
+    #map { flex:1; }
+    #drop { position:absolute; inset:0; z-index:1000; display:flex; align-items:center;
+            justify-content:center; background:rgba(14,22,32,.92); text-align:center; }
+    #drop.hidden { display:none; }
+    #drop .box { border:2px dashed #2f4459; border-radius:16px; padding:48px 56px; max-width:520px; }
+    #drop h2 { margin:0 0 8px; font-size:22px; }
+    #drop p { color:var(--muted); margin:6px 0; font-size:14px; }
+    .legend { position:absolute; bottom:14px; left:14px; z-index:600; background:var(--panel);
+              padding:8px 12px; border-radius:8px; font-size:12px; box-shadow:0 2px 8px rgba(0,0,0,.4); }
+    .legend i { display:inline-block; width:12px; height:12px; border-radius:2px; margin-right:6px;
+                vertical-align:-1px; }
+    .err { color:#ff6b6b; font-size:13px; }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>Wind<span>meter</span> Viewer</h1>
+    <div class="stat"><div class="v" id="s-dist">–</div><div class="l">Distance NM</div></div>
+    <div class="stat"><div class="v" id="s-dur">–</div><div class="l">Duration</div></div>
+    <div class="stat wind"><div class="v" id="s-maxwind">–</div><div class="l">Max wind kn</div></div>
+    <div class="stat wind"><div class="v" id="s-avgwind">–</div><div class="l">Avg wind kn</div></div>
+    <div class="stat boat"><div class="v" id="s-maxboat">–</div><div class="l">Max boat kn</div></div>
+    <div class="spacer"></div>
+    <label class="btn">Open CSV…<input type="file" id="file" accept=".csv,text/csv"></label>
+  </header>
+  <div style="position:relative; flex:1;">
+    <div id="map"></div>
+    <div class="legend">
+      <div><i style="background:#333"></i>Course</div>
+      <div><i style="background:var(--wind)"></i>Wind speed</div>
+      <div><i style="background:var(--boat)"></i>Boat speed</div>
+    </div>
+    <div id="drop">
+      <div class="box">
+        <h2>🧭 Drop a Windmeter log here</h2>
+        <p>Pop the microSD card from the Pico into your Mac and drag a
+           <code>WIND_*.csv</code> file onto this window — or use “Open CSV…”.</p>
+        <p>Your track is drawn with the wind/boat speed ribbon, just like on the boat.</p>
+        <p class="err" id="drop-err"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="./leaflet/leaflet.js"></script>
+<script>
+'use strict';
+
+// ── Map setup (online OSM + OpenSeaMap; you're at home with internet) ──────────
+const map = L.map('map', { center:[54.32,10.14], zoom:12, zoomControl:true });
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom:19, attribution:'© OpenStreetMap contributors'
+}).addTo(map);
+L.tileLayer('https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png', {
+  maxZoom:18, opacity:1.0, attribution:'© OpenSeaMap'
+}).addTo(map);
+
+let dataLayer = L.layerGroup().addTo(map);
+
+// ── Ribbon geometry (ported from the boat's app.js) ───────────────────────────
+const RIBBON_INTERVAL_S = 30, RIBBON_M_PER_KN = 8, R_EARTH_M = 6371000;
+const WIND_COLOR = '#3a9d4e', BOAT_COLOR = '#e8641e';
+const _toRad = d => d*Math.PI/180, _toDeg = r => r*180/Math.PI;
+
+function _bearing(a, b){
+  const f1=_toRad(a[0]), f2=_toRad(b[0]), dl=_toRad(b[1]-a[1]);
+  const y=Math.sin(dl)*Math.cos(f2);
+  const x=Math.cos(f1)*Math.sin(f2)-Math.sin(f1)*Math.cos(f2)*Math.cos(dl);
+  return (_toDeg(Math.atan2(y,x))+360)%360;
+}
+function _destPoint(lat, lon, brng, distM){
+  const d=distM/R_EARTH_M, t=_toRad(brng), f1=_toRad(lat), l1=_toRad(lon);
+  const sf2=Math.sin(f1)*Math.cos(d)+Math.cos(f1)*Math.sin(d)*Math.cos(t);
+  const f2=Math.asin(sf2);
+  const l2=l1+Math.atan2(Math.sin(t)*Math.sin(d)*Math.cos(f1), Math.cos(d)-Math.sin(f1)*sf2);
+  return [_toDeg(f2), ((_toDeg(l2)+540)%360)-180];
+}
+function _meanBearing(a, b){
+  if(a===null) return b; if(b===null) return a;
+  const x=Math.cos(_toRad(a))+Math.cos(_toRad(b));
+  const y=Math.sin(_toRad(a))+Math.sin(_toRad(b));
+  return (_toDeg(Math.atan2(y,x))+360)%360;
+}
+function addRibbon(container, samples){
+  const n = samples.length; if(n<2) return;
+  const brngAt = new Array(n);
+  for(let i=0;i<n;i++){
+    const a=[samples[i].lat, samples[i].lon];
+    const bIn  = i>0   ? _bearing([samples[i-1].lat,samples[i-1].lon], a) : null;
+    const bOut = i<n-1 ? _bearing(a, [samples[i+1].lat,samples[i+1].lon]) : null;
+    brngAt[i]=_meanBearing(bIn,bOut);
+  }
+  const windPt=new Array(n), boatPt=new Array(n);
+  for(let i=0;i<n;i++){
+    windPt[i]=_destPoint(samples[i].lat, samples[i].lon, brngAt[i]-90, samples[i].wind*RIBBON_M_PER_KN);
+    boatPt[i]=_destPoint(samples[i].lat, samples[i].lon, brngAt[i]+90, samples[i].boat*RIBBON_M_PER_KN);
+  }
+  for(let i=0;i<n-1;i++){
+    const pa=[samples[i].lat,samples[i].lon], pb=[samples[i+1].lat,samples[i+1].lon];
+    L.polygon([pa,pb,windPt[i+1],windPt[i]], {color:WIND_COLOR,weight:1,opacity:.7,fillColor:WIND_COLOR,fillOpacity:.40}).addTo(container);
+    L.polygon([pa,pb,boatPt[i+1],boatPt[i]], {color:BOAT_COLOR,weight:1,opacity:.7,fillColor:BOAT_COLOR,fillOpacity:.40}).addTo(container);
+  }
+}
+
+// ── CSV parsing ───────────────────────────────────────────────────────────────
+function parseCSV(text){
+  const lines = text.replace(/\r/g,'').split('\n').filter(l => l.trim());
+  if(!lines.length) throw new Error('Empty file');
+  const head = lines[0].split(',').map(s => s.trim());
+  const idx = name => head.indexOf(name);
+  const iLat=idx('lat'), iLon=idx('lon'), iSog=idx('sog_kn'),
+        iWind=idx('wind_kn'), iUtc=idx('utc');
+  if(iLat<0 || iLon<0) throw new Error('Not a Windmeter CSV (missing lat/lon columns)');
+  const rows=[];
+  for(let k=1;k<lines.length;k++){
+    const c=lines[k].split(',');
+    const lat=parseFloat(c[iLat]), lon=parseFloat(c[iLon]);
+    if(!isFinite(lat) || !isFinite(lon)) continue;
+    rows.push({
+      utc: iUtc>=0 ? c[iUtc] : '',
+      lat, lon,
+      sog:  iSog>=0  ? (parseFloat(c[iSog])||0)  : 0,
+      wind: iWind>=0 ? (parseFloat(c[iWind])||0) : 0,
+    });
+  }
+  if(rows.length<2) throw new Error('No usable position rows in file');
+  return rows;
+}
+
+function haversineNM(a, b){
+  const R=3440.065, f1=_toRad(a.lat), f2=_toRad(b.lat);
+  const df=_toRad(b.lat-a.lat), dl=_toRad(b.lon-a.lon);
+  const h=Math.sin(df/2)**2 + Math.cos(f1)*Math.cos(f2)*Math.sin(dl/2)**2;
+  return 2*R*Math.atan2(Math.sqrt(h), Math.sqrt(1-h));
+}
+
+function sample(rows, intervalS){
+  // rows are ~1 Hz; take one every intervalS seconds (by index as a fallback
+  // when timestamps are missing).
+  const out=[]; let last=null;
+  for(const r of rows){
+    const t = r.utc ? Date.parse(r.utc)/1000 : null;
+    if(last===null || t===null || (t-last)>=intervalS){
+      out.push({lat:r.lat, lon:r.lon, wind:r.wind, boat:r.sog});
+      last = t;
+    }
+  }
+  return out;
+}
+
+function fmtDur(sec){
+  if(!isFinite(sec) || sec<=0) return '–';
+  const h=Math.floor(sec/3600), m=Math.floor((sec%3600)/60);
+  return h>0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+// ── Render a parsed track ─────────────────────────────────────────────────────
+function render(rows){
+  dataLayer.clearLayers();
+
+  const coords = rows.map(r => [r.lat, r.lon]);
+  // Stats
+  let dist=0, maxW=0, maxB=0, sumW=0;
+  for(let i=0;i<rows.length;i++){
+    if(i>0) dist += haversineNM(rows[i-1], rows[i]);
+    maxW=Math.max(maxW, rows[i].wind); maxB=Math.max(maxB, rows[i].sog);
+    sumW += rows[i].wind;
+  }
+  const t0=rows[0].utc?Date.parse(rows[0].utc)/1000:null;
+  const t1=rows[rows.length-1].utc?Date.parse(rows[rows.length-1].utc)/1000:null;
+  document.getElementById('s-dist').textContent    = dist.toFixed(2);
+  document.getElementById('s-dur').textContent     = (t0&&t1)?fmtDur(t1-t0):'–';
+  document.getElementById('s-maxwind').textContent = maxW.toFixed(1);
+  document.getElementById('s-avgwind').textContent = (sumW/rows.length).toFixed(1);
+  document.getElementById('s-maxboat').textContent = maxB.toFixed(1);
+
+  // Course spine + two-sided speed ribbon
+  L.polyline(coords, {color:'#333', weight:2, opacity:.9}).addTo(dataLayer);
+  addRibbon(dataLayer, sample(rows, RIBBON_INTERVAL_S));
+  L.circleMarker(coords[0], {radius:6, color:'#00e5b0', fillColor:'#00e5b0', fillOpacity:1}).addTo(dataLayer);
+  L.circleMarker(coords[coords.length-1], {radius:6, color:'#e00000', fillColor:'#e00000', fillOpacity:1}).addTo(dataLayer);
+
+  map.fitBounds(L.latLngBounds(coords), {padding:[30,30]});
+  document.getElementById('drop').classList.add('hidden');
+}
+
+// ── File loading (drag-drop + picker) ─────────────────────────────────────────
+function loadFile(file){
+  const err = document.getElementById('drop-err');
+  err.textContent = '';
+  const reader = new FileReader();
+  reader.onload = e => {
+    try { render(parseCSV(e.target.result)); }
+    catch(ex){ err.textContent = ex.message; document.getElementById('drop').classList.remove('hidden'); }
+  };
+  reader.onerror = () => { err.textContent = 'Could not read file'; };
+  reader.readAsText(file);
+}
+
+document.getElementById('file').addEventListener('change', e => {
+  if(e.target.files[0]) loadFile(e.target.files[0]);
+});
+window.addEventListener('dragover', e => { e.preventDefault(); });
+window.addEventListener('drop', e => {
+  e.preventDefault();
+  const f = e.dataTransfer.files[0];
+  if(f) loadFile(f);
+});
+</script>
+</body>
+</html>
