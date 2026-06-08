@@ -10,6 +10,9 @@ computed from the SD log by the macOS viewer (`../viewer/index.html`).
 
 ## Wiring (Pico W GP numbers)
 
+> Full pin-by-pin plan with physical pin numbers, power rails, the bulk
+> capacitor and a build/test order: **[WIRING.md](WIRING.md)**.
+
 | Pico pin | Connects to | Function |
 |---|---|---|
 | **GP1** ← | GPS **TX** | UART0 RX (NMEA in) |
