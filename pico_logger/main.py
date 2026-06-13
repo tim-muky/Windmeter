@@ -413,7 +413,8 @@ class Logger:
 
 def main():
     # ── Displays ──────────────────────────────────────────────────────────────
-    disp_spi = SPI(config.SPI_DISP_ID, baudrate=10_000_000, polarity=0, phase=0,
+    disp_spi = SPI(config.SPI_DISP_ID, baudrate=config.DISP_SPI_BAUD,
+                   polarity=0, phase=0,
                    sck=Pin(config.PIN_DISP_SCK), mosi=Pin(config.PIN_DISP_MOSI))
     wind_disp = Display(disp_spi, config.PIN_CS_WIND, config.DISP_MODULES,
                         config.DISP_INTENSITY)

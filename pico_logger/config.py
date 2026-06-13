@@ -21,6 +21,9 @@ PIN_CS_WIND    = 5      # CS → display 1 (wind)
 PIN_CS_SPEED   = 8      # CS → display 2 (boat speed)
 DISP_MODULES   = 4      # cascaded 8×8 chips per module
 DISP_INTENSITY = 8      # brightness 0-15
+# SPI clock for the displays. 1 MHz is rock-solid over loose breadboard
+# jumpers; raise toward 10_000_000 only once everything is soldered short.
+DISP_SPI_BAUD  = 1_000_000
 
 # ─── Anemometer (cup, reed/hall pulse output) ─────────────────────────────────
 # One leg to PIN_ANEMO, the other to GND.  Internal pull-up holds the line high;
