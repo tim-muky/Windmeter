@@ -24,11 +24,17 @@ DISP_INTENSITY = 8      # brightness 0-15
 # SPI clock for the displays. 1 MHz is rock-solid over loose breadboard
 # jumpers; raise toward 10_000_000 only once everything is soldered short.
 DISP_SPI_BAUD  = 1_000_000
-# Display orientation — match how the panel is physically mounted. Try the
-# four combinations until the readout shows e.g. "^14.5" correctly (arrow at
-# the left, digits upright):
-DISPLAY_FLIP_COLS = False   # reverse left<->right (moves the arrow to the other end)
-DISPLAY_FLIP_ROWS = True    # flip top<->bottom (turns digits/arrow upright)
+# Per-display orientation — each panel set independently (they can be mounted
+# differently). Run the L-test, see which CORNER the L sits in for each panel,
+# and set its two flags from this rule:
+#     corner top-left      -> COLS=False, ROWS=False
+#     corner top-right     -> COLS=True,  ROWS=False
+#     corner bottom-left   -> COLS=False, ROWS=True
+#     corner bottom-right  -> COLS=True,  ROWS=True
+WIND_FLIP_COLS = False      # wind display (CS GP5)
+WIND_FLIP_ROWS = True
+BOAT_FLIP_COLS = False      # boat display (CS GP8)
+BOAT_FLIP_ROWS = True
 
 # ─── Anemometer (cup, reed/hall pulse output) ─────────────────────────────────
 # One leg to PIN_ANEMO, the other to GND.  Internal pull-up holds the line high;

@@ -106,12 +106,12 @@ def _render(value, trend):
     return fb
 
 
-def _orient(fb):
+def _orient(fb, flip_cols, flip_rows):
     """Apply mounting orientation: optional left-right and/or top-bottom flip
     so the readout matches how the panel is physically mounted."""
-    if config.DISPLAY_FLIP_COLS:
+    if flip_cols:
         fb = fb[::-1]
-    if config.DISPLAY_FLIP_ROWS:
+    if flip_rows:
         out = [0] * 32
         for i in range(32):
             b = fb[i]
@@ -127,10 +127,12 @@ def _orient(fb):
 class Display:
     """One MAX7219 4-in-1 module (4 cascaded 8×8 matrices)."""
 
-    def __init__(self, spi, cs_pin, n, intensity):
+    def __init__(self, spi, cs_pin, n, intensity, flip_cols=False, flip_rows=False):
         self._spi = spi
         self._cs = Pin(cs_pin, Pin.OUT, value=1)
         self._n = n
+        self._flip_cols = flip_cols
+        self._flip_rows = flip_rows
         self._init(intensity)
 
     def _tx(self, data):
@@ -154,7 +156,7 @@ class Display:
             self._all(row, 0)
 
     def show(self, fb):
-        fb = _orient(fb)
+        fb = _orient(fb, self._flip_cols, self._flip_rows)
         for row in range(8):
             data = []
             for chip in range(self._n - 1, -1, -1):
@@ -438,9 +440,11 @@ def main():
                    polarity=0, phase=0,
                    sck=Pin(config.PIN_DISP_SCK), mosi=Pin(config.PIN_DISP_MOSI))
     wind_disp = Display(disp_spi, config.PIN_CS_WIND, config.DISP_MODULES,
-                        config.DISP_INTENSITY)
+                        config.DISP_INTENSITY,
+                        config.WIND_FLIP_COLS, config.WIND_FLIP_ROWS)
     speed_disp = Display(disp_spi, config.PIN_CS_SPEED, config.DISP_MODULES,
-                         config.DISP_INTENSITY)
+                         config.DISP_INTENSITY,
+                         config.BOAT_FLIP_COLS, config.BOAT_FLIP_ROWS)
 
     # Startup brightness sweep, then dashes while we wait for data
     for d in (wind_disp, speed_disp):
