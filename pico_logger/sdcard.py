@@ -69,7 +69,16 @@ class SDCard:
         else:
             raise OSError("couldn't determine SD card version")
 
-        if self.cmd(9, 0, 0, 0, False) != 0:
+        # Some cards need extra settle time + clocks before CMD9 (SEND_CSD)
+        # responds cleanly. Retry a few times with dummy clocks rather than
+        # giving up on the first non-zero R1.
+        for _ in range(10):
+            if self.cmd(9, 0, 0, 0, False) == 0:
+                break
+            for _ in range(8):
+                self.spi.write(b"\xff")
+            time.sleep_ms(10)
+        else:
             raise OSError("no response from SD card")
         csd = bytearray(16)
         self.readinto(csd)
