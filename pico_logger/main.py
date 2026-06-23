@@ -106,18 +106,22 @@ def _render(value, trend):
     return fb
 
 
-def _rotate180(fb):
-    """Rotate a 32-column framebuffer 180° (for a display mounted upside-down/
-    reversed): reverse the column order and flip each column top<->bottom."""
-    out = [0] * 32
-    for i in range(32):
-        b = fb[31 - i]
-        r = 0
-        for k in range(8):
-            if b & (1 << k):
-                r |= 1 << (7 - k)
-        out[i] = r
-    return out
+def _orient(fb):
+    """Apply mounting orientation: optional left-right and/or top-bottom flip
+    so the readout matches how the panel is physically mounted."""
+    if config.DISPLAY_FLIP_COLS:
+        fb = fb[::-1]
+    if config.DISPLAY_FLIP_ROWS:
+        out = [0] * 32
+        for i in range(32):
+            b = fb[i]
+            r = 0
+            for k in range(8):
+                if b & (1 << k):
+                    r |= 1 << (7 - k)
+            out[i] = r
+        fb = out
+    return fb
 
 
 class Display:
@@ -150,8 +154,7 @@ class Display:
             self._all(row, 0)
 
     def show(self, fb):
-        if config.DISPLAY_ROTATE_180:
-            fb = _rotate180(fb)
+        fb = _orient(fb)
         for row in range(8):
             data = []
             for chip in range(self._n - 1, -1, -1):
