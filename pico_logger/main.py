@@ -61,15 +61,14 @@ _DEF_W = 5
 
 
 def _render(value, trend):
-    """Build a 32-column framebuffer: [trend arrow] [right-aligned value]."""
+    """32-col framebuffer: module 1 (cols 0-7) = trend arrow; modules 2-4
+    (cols 8-31) = value, one decimal, no leading zero, range 0.0-99.9."""
     if value is None or value < 0:
-        val_str = '----'
-    elif value < 10.0:
-        val_str = '0' + '{:.1f}'.format(value)   # leading zero: 0.0 -> "00.0"
-    elif value < 100.0:
-        val_str = '{:.1f}'.format(value)
+        val_str = '---'
     else:
-        val_str = '{:.0f}'.format(int(value))
+        if value > 99.9:
+            value = 99.9
+        val_str = '{:.1f}'.format(value)   # 1.2 / 0.0 / 14.5 / 99.9
 
     fb = [0] * 32
 
@@ -97,9 +96,9 @@ def _render(value, trend):
         total_w += _CHAR_W.get(ch, _DEF_W)
         if i < len(val_str) - 1:
             total_w += 1
-    # Right-align the value ending at col 30 (1-col right margin) so the last
-    # digit isn't clipped at the very edge; never start before col 7 (the arrow).
-    x = max(7, 31 - total_w)
+    # Right-align the value within modules 2-4 (cols 8-31), ending at col 30
+    # (1-col right margin) so the last digit isn't clipped; never into module 1.
+    x = max(8, 31 - total_w)
     for ch in val_str:
         draw_char(ch, x)
         x += _CHAR_W.get(ch, _DEF_W) + 1
