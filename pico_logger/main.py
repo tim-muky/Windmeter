@@ -97,7 +97,9 @@ def _render(value, trend):
         total_w += _CHAR_W.get(ch, _DEF_W)
         if i < len(val_str) - 1:
             total_w += 1
-    x = 7 + max(0, 25 - total_w)
+    # Right-align the value ending at col 30 (1-col right margin) so the last
+    # digit isn't clipped at the very edge; never start before col 7 (the arrow).
+    x = max(7, 31 - total_w)
     for ch in val_str:
         draw_char(ch, x)
         x += _CHAR_W.get(ch, _DEF_W) + 1
