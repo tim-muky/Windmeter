@@ -65,7 +65,7 @@ def _render(value, trend):
     if value is None or value < 0:
         val_str = '----'
     elif value < 10.0:
-        val_str = ' ' + '{:.1f}'.format(value)
+        val_str = '0' + '{:.1f}'.format(value)   # leading zero: 0.0 -> "00.0"
     elif value < 100.0:
         val_str = '{:.1f}'.format(value)
     else:
