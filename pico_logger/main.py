@@ -106,13 +106,21 @@ def _render(value, trend):
 
 
 def _orient(fb, flip_cols, flip_rows, reverse_modules):
-    """Apply mounting orientation. reverse_modules swaps the four 8-col blocks'
-    order (for a strip wired data-in from the opposite end) without mirroring
-    within a module; flip_cols mirrors all columns; flip_rows flips top<->bottom."""
+    """Mounting-orientation transforms (compose as needed):
+      reverse_modules : swap the four 8-col module blocks' order (data-in end)
+      flip_cols       : mirror the 8 columns WITHIN each module (per-module)
+      flip_rows       : flip the 8 rows top<->bottom
+    flip_cols + flip_rows = each module rotated 180° in place (common variant
+    where the matrix is mounted upside-down on its own PCB)."""
     if reverse_modules:
         fb = fb[24:32] + fb[16:24] + fb[8:16] + fb[0:8]
     if flip_cols:
-        fb = fb[::-1]
+        out = list(fb)
+        for blk in range(4):
+            base = blk * 8
+            for i in range(8):
+                out[base + i] = fb[base + 7 - i]
+        fb = out
     if flip_rows:
         out = [0] * 32
         for i in range(32):

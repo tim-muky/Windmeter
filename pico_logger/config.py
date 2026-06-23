@@ -24,17 +24,16 @@ DISP_INTENSITY = 8      # brightness 0-15
 # SPI clock for the displays. 1 MHz is rock-solid over loose breadboard
 # jumpers; raise toward 10_000_000 only once everything is soldered short.
 DISP_SPI_BAUD  = 1_000_000
-# Display orientation per panel (the two panels can be mounted differently).
-#   FLIP_ROWS         : digits upside-down -> True
-#   FLIP_COLS         : digits mirrored/backwards -> True
-#   REVERSE_MODULES   : whole readout left-right swapped (arrow on wrong end) but
-#                       digits NOT mirrored -> True
-# This build: both panels have vertically-flipped matrices (ROWS=True), normal
-# module order (REVERSE_MODULES=False).
-WIND_FLIP_COLS       = False    # wind display (CS GP5) — bottom panel
+# Display orientation per panel (two panels can be mounted differently).
+#   FLIP_ROWS       : rows upside-down -> True
+#   FLIP_COLS       : each module mirrored left<->right (per-module) -> True
+#   REVERSE_MODULES : module ORDER swapped end-for-end (arrow on wrong end) -> True
+# FLIP_COLS + FLIP_ROWS = each module rotated 180° in place. These modules are
+# that variant (matrix mounted upside-down on its PCB), in correct order.
+WIND_FLIP_COLS       = True     # wind display (CS GP5) — bottom panel
 WIND_FLIP_ROWS       = True
 WIND_REVERSE_MODULES = False
-BOAT_FLIP_COLS       = False    # boat display (CS GP8) — top panel
+BOAT_FLIP_COLS       = True     # boat display (CS GP8) — top panel
 BOAT_FLIP_ROWS       = True
 BOAT_REVERSE_MODULES = False
 
