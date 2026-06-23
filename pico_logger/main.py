@@ -90,7 +90,7 @@ def _render(value, trend):
             fb[x_start + col] = col_byte
 
     arrow = '^' if trend == 1 else ('v' if trend == -1 else '>')
-    draw_char(arrow, 0)
+    draw_char(arrow, 2)   # centered in the first 8-wide matrix (cols 2-6)
 
     total_w = 0
     for i, ch in enumerate(val_str):
