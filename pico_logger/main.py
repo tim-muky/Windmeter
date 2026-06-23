@@ -105,9 +105,12 @@ def _render(value, trend):
     return fb
 
 
-def _orient(fb, flip_cols, flip_rows):
-    """Apply mounting orientation: optional left-right and/or top-bottom flip
-    so the readout matches how the panel is physically mounted."""
+def _orient(fb, flip_cols, flip_rows, reverse_modules):
+    """Apply mounting orientation. reverse_modules swaps the four 8-col blocks'
+    order (for a strip wired data-in from the opposite end) without mirroring
+    within a module; flip_cols mirrors all columns; flip_rows flips top<->bottom."""
+    if reverse_modules:
+        fb = fb[24:32] + fb[16:24] + fb[8:16] + fb[0:8]
     if flip_cols:
         fb = fb[::-1]
     if flip_rows:
@@ -126,12 +129,14 @@ def _orient(fb, flip_cols, flip_rows):
 class Display:
     """One MAX7219 4-in-1 module (4 cascaded 8×8 matrices)."""
 
-    def __init__(self, spi, cs_pin, n, intensity, flip_cols=False, flip_rows=False):
+    def __init__(self, spi, cs_pin, n, intensity, flip_cols=False, flip_rows=False,
+                 reverse_modules=False):
         self._spi = spi
         self._cs = Pin(cs_pin, Pin.OUT, value=1)
         self._n = n
         self._flip_cols = flip_cols
         self._flip_rows = flip_rows
+        self._reverse_modules = reverse_modules
         self._init(intensity)
 
     def _tx(self, data):
@@ -155,7 +160,7 @@ class Display:
             self._all(row, 0)
 
     def show(self, fb):
-        fb = _orient(fb, self._flip_cols, self._flip_rows)
+        fb = _orient(fb, self._flip_cols, self._flip_rows, self._reverse_modules)
         for row in range(8):
             data = []
             for chip in range(self._n - 1, -1, -1):
@@ -440,10 +445,12 @@ def main():
                    sck=Pin(config.PIN_DISP_SCK), mosi=Pin(config.PIN_DISP_MOSI))
     wind_disp = Display(disp_spi, config.PIN_CS_WIND, config.DISP_MODULES,
                         config.DISP_INTENSITY,
-                        config.WIND_FLIP_COLS, config.WIND_FLIP_ROWS)
+                        config.WIND_FLIP_COLS, config.WIND_FLIP_ROWS,
+                        config.WIND_REVERSE_MODULES)
     speed_disp = Display(disp_spi, config.PIN_CS_SPEED, config.DISP_MODULES,
                          config.DISP_INTENSITY,
-                         config.BOAT_FLIP_COLS, config.BOAT_FLIP_ROWS)
+                         config.BOAT_FLIP_COLS, config.BOAT_FLIP_ROWS,
+                         config.BOAT_REVERSE_MODULES)
 
     # Startup brightness sweep, then dashes while we wait for data
     for d in (wind_disp, speed_disp):
