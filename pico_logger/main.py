@@ -106,6 +106,20 @@ def _render(value, trend):
     return fb
 
 
+def _rotate180(fb):
+    """Rotate a 32-column framebuffer 180° (for a display mounted upside-down/
+    reversed): reverse the column order and flip each column top<->bottom."""
+    out = [0] * 32
+    for i in range(32):
+        b = fb[31 - i]
+        r = 0
+        for k in range(8):
+            if b & (1 << k):
+                r |= 1 << (7 - k)
+        out[i] = r
+    return out
+
+
 class Display:
     """One MAX7219 4-in-1 module (4 cascaded 8×8 matrices)."""
 
@@ -136,6 +150,8 @@ class Display:
             self._all(row, 0)
 
     def show(self, fb):
+        if config.DISPLAY_ROTATE_180:
+            fb = _rotate180(fb)
         for row in range(8):
             data = []
             for chip in range(self._n - 1, -1, -1):

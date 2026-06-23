@@ -24,6 +24,9 @@ DISP_INTENSITY = 8      # brightness 0-15
 # SPI clock for the displays. 1 MHz is rock-solid over loose breadboard
 # jumpers; raise toward 10_000_000 only once everything is soldered short.
 DISP_SPI_BAUD  = 1_000_000
+# Set True if the display is mounted rotated 180° (digits + trend arrow appear
+# reversed / upside-down). Flips the rendered output to match the mounting.
+DISPLAY_ROTATE_180 = True
 
 # ─── Anemometer (cup, reed/hall pulse output) ─────────────────────────────────
 # One leg to PIN_ANEMO, the other to GND.  Internal pull-up holds the line high;
