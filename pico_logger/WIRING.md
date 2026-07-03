@@ -302,31 +302,119 @@ Pin labels differ by board: **VCC** may be `3V3`/`5V`/`VCC`; data pins may be
   marginal.
 - Format the card **FAT32** before first use.
 
-### 7.5 Anemometer (the survivor)
+### 7.5 Anemometer (masthead reed/hall switch)
 
-Two wires from a reed/hall switch. The firmware enables the Pico's **internal
-pull-up**, so no external resistor is required for basic operation.
+Two wires from the anemometer come down through a ~7 m mast cable. The Pico's
+internal pull-up (~50 kΩ) is fine for a jumper on the bench, but on a real
+long line it's too weak — cable capacitance slows the rising edge, pulses are
+missed, and the line picks up noise. **Add the four passive components below**
+for a rock-solid masthead input; the whole conditioning network sits at the
+**Pico end**, near GP15 — not at the masthead.
 
+#### Bench-only (short jumper, no cable):
 ```
    pin 20 GP15 ─⚪W29──► anemometer leg A (signal)
    GND rail    ─⚫W15──► anemometer leg B
 ```
 
-**Optional, recommended for a long masthead cable** (adds noise immunity and
-protects the GPIO):
+#### Recommended for the masthead cable (add these four parts):
 
 ```
-   pin 20 GP15 ──┬── 1 kΩ ──► anemometer leg A
-                 │
-               10 nF
-                 │
-   GND rail ─────┴──────────► anemometer leg B
+                                           ┌───► 3V3 (Pico pin 36)
+                                           │
+                                         ┌─┴─┐
+                                         │10k│  R1 : pull-up
+                                         └─┬─┘
+                                           │
+                    ┌──────┐                │
+   pin 20 GP15 ────►┤ 1 kΩ ├──── node A ────┼──── ⚪ masthead signal ── anemo leg A
+                    └──────┘                │      (up 7 m of shielded cable)
+                                           ─┴─
+                                       10 nF C1
+                                           ─┬─
+                                            │
+                                     [3V3 zener/TVS, optional]
+                                            │
+   GND rail  ─────────────────────────────  ●  ────⚫ masthead ground ── anemo leg B
+                                                    (shielded, shield to GND at Pico end only)
 ```
 
-- The 1 kΩ series resistor limits current into the pin if the line ever sees a
-  surge; the 10 nF cap to GND forms an RC low-pass (~µs with the resistor, ~ms
-  with the internal pull-up) that smooths reed bounce. Harmless at the
-  anemometer's few-Hz rate.
+#### What each part does
+
+| Part | Ref | Value | Job |
+|---|---|---|---|
+| Pull-up to 3V3 | R1 | **10 kΩ** ¼ W | Charges the long line back up to 3.3 V quickly between reed opens; without it, cable capacitance slows the edge and pulses get missed. |
+| Series resistor | R2 | **1 kΩ** ¼ W | Limits current into the pin during a surge / ESD event and forms an RC filter with C1. |
+| Filter capacitor | C1 | **10 nF ceramic** (X7R, 50 V) | Smooths reed-switch bounce and rejects RF pickup on the long line. |
+| Surge clamp *(optional but recommended for a boat)* | D1 | **3.3 V zener** or **SMBJ3.3A TVS** | Clamps any surge (lightning static, static from wet weather) safely to GND before it hits the GPIO. |
+
+#### Notes
+- The **external 10 kΩ** and the Pico's internal ~50 kΩ pull-up combine in
+  parallel to ~8.5 kΩ — no need to disable the internal one; the code stays
+  as-is.
+- All four parts mount **at the Pico end** (on the perfboard, close to GP15).
+  Do **not** put them at the masthead — that defeats the whole point.
+- Cable should be **shielded, 3-core would be nice** even though we only need 2
+  conductors, so you can carry a spare or wire in a future hall sensor.
+  **Ground the shield at the Pico end only** (single-point ground; prevents
+  ground loops via the mast).
+- Twist the signal and GND conductors together inside the cable — even without
+  a shield, twisting rejects most magnetic interference.
+- Firmware debounce (`ANEMO_DEBOUNCE_MS = 4`) still runs; belt-and-braces.
+
+#### Assembly layout (perfboard, near the Pico)
+
+```
+   Pico pin 20 (GP15) ──┬── [R2 = 1 kΩ] ──● node A ──► out to masthead signal
+                        │                  │
+                    (Pico's                │
+                    internal pull-up       │
+                    already active)        ├── [R1 = 10 kΩ] ──► Pico pin 36 (3V3)
+                                           │
+                                           ├── [C1 = 10 nF] ──► GND
+                                           │
+                                           └── [D1 zener/TVS, cathode up] ──► GND
+                                              (optional surge clamp)
+
+   Masthead cable ground ──► GND rail (shield: also to GND, only at this end)
+```
+
+#### Wire additions
+
+| # | From | To | Colour |
+|---|---|---|---|
+| W29 | Pico GP15 — pin 20 | R2 (in series) → node A → masthead **signal** | ⚪ shielded |
+| W29a | node A | R1 (10 kΩ) → Pico **3V3** (pin 36) | 🟠 short |
+| W29b | node A | C1 (10 nF) → GND rail | ⚫ short |
+| W29c (opt) | node A | D1 (3.3 V zener/TVS) → GND rail | ⚫ short |
+| W15 | GND rail | masthead **ground** wire (+ cable shield, single-point) | ⚫ shielded |
+
+#### Parts to buy
+
+| Part | Qty | Where |
+|---|---|---|
+| 10 kΩ 1/4 W resistor (5 %) | 1 (+ spares) | any electronics shop / eBay resistor kit |
+| 1 kΩ 1/4 W resistor (5 %) | 1 (+ spares) | same |
+| 10 nF ceramic capacitor (X7R, 50 V, through-hole, marked "**103**") | 1 (+ spares) | same |
+| 3.3 V zener (e.g. BZX85-C3V3) **or** SMBJ3.3A TVS (optional) | 1 | same |
+| Shielded 2- or 3-core cable, ~8 m | 1 | mic cable / alarm cable works |
+| Waterproof gland at the mast base | 1 | for the cable entry |
+
+Whole conditioning circuit costs ~€1–2. That's it — biggest single reliability
+upgrade you can make to the sensor path.
+
+#### Testing after adding the network
+
+1. **Power off. Multimeter continuity across the two anemometer wires at the
+   Pico end.** Turn the cups by hand at the masthead (or push the rotor if
+   accessible): the meter should **beep once per revolution** — proves the
+   full chain from sensor through cable to the Pico end is intact.
+2. **Power on. Multimeter DC volts on GP15 → GND, cups stopped.** Should read
+   ~3.3 V (line pulled high by R1). Spin: should dip toward 0 V per revolution.
+3. **Run `main.py`, spin the cups.** Wind display should climb steadily. If it
+   still misses pulses at real wind speeds, drop `KMH_PER_HZ` slightly *only*
+   after a calibration run against a known reference — the pull-up should make
+   this network dead-reliable across the whole speed range.
 - For an exposed run you can add a small **TVS or 3.3 V zener** from GP15 to GND
   as a surge clamp.
 - `ANEMO_DEBOUNCE_MS` in firmware (default 4 ms) handles bounce in software too.
