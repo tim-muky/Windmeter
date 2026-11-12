@@ -7,7 +7,7 @@ Drei Stufen, jede für sich aussagekräftig:
 |-------|----------|-------------|
 | 1. Sensor allein | Multimeter (Ω) | Schaltet der Kontakt überhaupt? |
 | 2. Am PiLogger-Eingang | Multimeter (V DC) | Ist der Pegel stark genug für den Eingang? |
-| 3. Live-Zählung | `scripts/test_anemometer.py` | Kommen die Pulse im System an, wie viele, wie sauber? |
+| 3. Live-Zählung | `scripts/test_anemometer.py` oder `pico_firmware/anemo_test.py` | Kommen die Pulse im System an, wie viele, wie sauber? |
 
 ## So ist der Windgeber angebunden
 
@@ -171,7 +171,28 @@ python3 scripts/test_anemometer.py --source gpio --pin 17
   zählen, Abhilfe ist ein Kondensator (100 nF) parallel zu Imp/GND oder ein anderer Sensor.
 - **Pegel** bei „kein Signal“: HIGH = Eingang offen (ok), LOW = Kurzschluss oder Sensor zieht dauerhaft.
 
-### Nützliche Optionen (alle Varianten)
+### Variante D – Sensor an einem freien PICO (ohne Pi, ohne PiLogger)
+
+Für einen Reedkontakt mit zwei Adern reicht ein PICO und Thonny.
+Skript: `pico_firmware/anemo_test.py`.
+
+| Sensor | PICO |
+|--------|------|
+| Ader 1 | GP15 (Pin 20) |
+| Ader 2 | GND (Pin 18) |
+| optional | 10 kΩ von GP15 nach 3V3 (Pin 36), bildet einen härteren Pull‑up wie am PiLogger nach |
+
+1. PICO per USB anschließen, in Thonny `pico_firmware/anemo_test.py` öffnen.
+2. Ausführen (F5). Die Ausgabe erscheint in der Thonny‑Shell, die Onboard‑LED
+   leuchtet, solange der Kontakt geschlossen ist.
+3. Schalen drehen, dann Strg+C für die Zusammenfassung.
+
+Die Spalten sind dieselben wie bei Variante C (Flanken, Pulse, Low‑Zeit, Prell).
+Die Zeitmessung läuft im Hardware‑Interrupt mit Mikrosekunden‑Auflösung und ist
+damit genauer als auf dem Pi. Sensorkonstante und Entprellzeit stehen als
+Konstanten am Anfang des Skripts (`FACTOR`, `UNIT`, `DEBOUNCE_MS`).
+
+### Nützliche Optionen (Varianten A bis C)
 
 | Option | Wirkung |
 |--------|---------|
