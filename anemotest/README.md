@@ -146,7 +146,82 @@ wird), der PICO aus dem Hauptprojekt.
 
 Summe: Stufe 1 etwa 40 bis 60 €, mit Stufe 2 etwa 10 bis 20 € mehr.
 
-## Installation
+## SD-Karte vorbereiten und erster Start
+
+Du brauchst: PC oder Mac mit SD-Kartenleser, die microSD-Karte, die
+WLAN-Zugangsdaten. Monitor und Tastatur für den Pi sind nicht nötig.
+
+1. **Raspberry Pi Imager** von <https://www.raspberrypi.com/software/> laden und
+   installieren (Windows, macOS, Linux).
+2. microSD-Karte in den Kartenleser stecken. Alles darauf wird gelöscht.
+3. Imager starten und die drei Auswahlfelder ausfüllen:
+   - **Modell**: „Raspberry Pi Zero 2 W“ oder „Raspberry Pi Zero W“, je nachdem
+     was du hast.
+   - **Betriebssystem**: „Raspberry Pi OS (other)“ → **„Raspberry Pi OS Lite (32-bit)“**.
+     Lite heißt ohne Desktop, das reicht und ist auf dem Zero deutlich flotter.
+     Der alte Zero W (ohne „2“) kann nur 32-bit; auf dem Zero 2 W läuft 32-bit ebenfalls.
+   - **SD-Karte**: deine Karte auswählen. Genau hinsehen, dass es nicht eine
+     externe Festplatte ist.
+4. Auf **Weiter** klicken. Der Imager fragt, ob du die **Einstellungen anpassen**
+   willst: **Ja**. Hier trägst du ein:
+   - Hostname: `anemotest` (dann ist die Seite später unter `anemotest.local` erreichbar)
+   - Benutzername und Passwort: z. B. `pi` und ein Passwort deiner Wahl. Merken.
+   - WLAN: Name (SSID) und Passwort deines Heimnetzes, Land `DE`.
+     **Der Pi Zero kann nur 2,4-GHz-WLAN.** Ein reines 5-GHz-Netz findet er nicht.
+   - Spracheinstellungen: Zeitzone `Europe/Berlin`, Tastatur `de`.
+   - Reiter **Dienste**: **SSH aktivieren**, „Passwort zur Authentifizierung verwenden“.
+   - Speichern.
+5. **Schreiben** bestätigen. Der Imager lädt das Image, schreibt und prüft die
+   Karte, das dauert einige Minuten. Danach die Karte auswerfen.
+6. Karte in den Pi stecken, Netzteil an den Micro-USB-Anschluss mit der
+   Beschriftung **PWR IN** (der äußere der beiden), nicht an „USB“. Grüne LED
+   blinkt beim Booten. Der erste Start dauert auf dem Zero zwei bis drei Minuten.
+7. Vom PC aus einloggen. Terminal (Windows: PowerShell) öffnen:
+
+   ```bash
+   ssh pi@anemotest.local
+   ```
+
+   Beim ersten Mal die Frage nach dem Fingerprint mit `yes` beantworten, dann
+   das Passwort eingeben. Wird `anemotest.local` nicht gefunden, die IP-Adresse
+   im Router nachsehen (Gerät „anemotest“) und `ssh pi@<IP>` verwenden.
+8. Paketlisten aktualisieren (ein komplettes Upgrade ist nicht nötig):
+
+   ```bash
+   sudo apt update
+   ```
+
+9. Das Verzeichnis `anemotest/` vom PC auf den Pi kopieren. In einem zweiten
+   Terminal auf dem PC, im Ordner, der `anemotest/` enthält:
+
+   ```bash
+   scp -r anemotest pi@anemotest.local:~/
+   ```
+
+   Unter Windows geht `scp` in der PowerShell, alternativ WinSCP per Drag & Drop
+   in das Home-Verzeichnis des Pi.
+10. Auf dem Pi installieren:
+
+    ```bash
+    cd ~/anemotest
+    sudo bash install.sh
+    ```
+
+    Das Skript installiert pigpio und spidev/smbus, schaltet I2C und SPI ein und
+    richtet den Autostart ein. Am Ende steht die Adresse der Web-Oberfläche.
+11. Pi herunterfahren (`sudo poweroff`), Strom ab, **jetzt verdrahten** (siehe
+    Pläne oben), Strom wieder dran. Nach dem Booten im Browser öffnen:
+
+    `http://anemotest.local:8080`
+
+    Zeigt die Seite „keine Verbindung“, läuft der Dienst noch nicht:
+    `systemctl status anemotest` und `journalctl -u anemotest -n 30` auf dem Pi.
+
+Ohne Hardware kannst du die Oberfläche schon vorher sehen:
+`python3 ~/anemotest/anemotest.py --simulate --port 8081`, dann
+`http://anemotest.local:8081`.
+
+## Installation (Kurzfassung)
 
 ```bash
 # auf dem Pi, z. B. per scp oder git das Verzeichnis anemotest/ kopieren
