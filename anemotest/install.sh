@@ -7,12 +7,13 @@ USER_NAME="${SUDO_USER:-pi}"
 
 echo "▶ Pakete installieren (pigpio, spidev) …"
 apt-get update -qq
-apt-get install -y --no-install-recommends pigpio python3-pigpio python3-spidev
+apt-get install -y --no-install-recommends pigpio python3-pigpio python3-spidev python3-smbus i2c-tools
 
 echo "▶ pigpiod aktivieren (liefert µs-genaue Flankenzeiten) …"
 systemctl enable --now pigpiod
 
-echo "▶ SPI für den MCP3008 einschalten (schadet nicht, wenn keiner dran ist) …"
+echo "▶ I2C (ADS1115) und SPI (MCP3008) einschalten – schadet nicht, wenn kein ADC dran ist …"
+raspi-config nonint do_i2c 0 || echo "  raspi-config nicht verfügbar – I2C ggf. manuell aktivieren"
 raspi-config nonint do_spi 0 || echo "  raspi-config nicht verfügbar – SPI ggf. manuell aktivieren"
 
 echo "▶ systemd-Dienst einrichten …"

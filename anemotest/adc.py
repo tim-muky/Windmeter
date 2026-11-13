@@ -1,8 +1,12 @@
 """
 Signal-level ("Signalstärke") measurement with an ADC.
 
-The Pi cannot measure voltage itself, so an MCP3008 (SPI) samples the sensor
-node continuously.  Idle the node sits at the pull-up voltage (≈ 3.3 V); while
+The Pi cannot measure voltage itself, so an external ADC samples the sensor
+node continuously.  Supported:
+
+  MCP3008   – SPI, 10 bit, several kS/s   (bare DIP chip on a breadboard)
+  ADS1115   – I2C, 16 bit, 860 S/s        (common breakout module with PGA)
+  ADS1015   – I2C, 12 bit, 3300 S/s       (same module layout and register map)  Idle the node sits at the pull-up voltage (≈ 3.3 V); while
 the reed contact is closed it drops to
 
         V_low = V_idle · R_contact / (R_contact + R_pullup)
@@ -40,6 +44,61 @@ class Mcp3008Reader:
 
     def close(self):
         self.spi.close()
+
+
+class Ads1x15Reader:
+    """
+    ADS1115 / ADS1015 breakout on I2C (SCL=GPIO3, SDA=GPIO2), address 0x48
+    with ADDR→GND.  Register-level driver, needs only python3-smbus.
+
+    Configured once for continuous conversion on one single-ended channel,
+    PGA ±4.096 V (1 LSB = 125 µV on the ADS1115) and the fastest data rate
+    (DR bits 111: 860 S/s on the ADS1115, 3300 S/s on the ADS1015).  The
+    conversion register is then read in a loop; the ADS1015 returns its
+    12-bit result left-aligned, so the same scaling works for both chips.
+    """
+
+    _REG_CONV, _REG_CONFIG = 0x00, 0x01
+    _FS_VOLT = 4.096
+
+    def __init__(self, bus=1, address=0x48, channel=0, vref=3.3):
+        try:
+            import smbus2 as smbus
+        except ImportError:
+            import smbus
+        self.bus = smbus.SMBus(bus)
+        self.address = address
+        self.channel = channel
+        self.vref = vref
+        mux = 0b100 + (channel & 3)                  # AINx vs GND
+        cfg = ((0 << 15)        # OS: no single-shot trigger
+               | (mux << 12)
+               | (0b001 << 9)   # PGA ±4.096 V
+               | (0 << 8)       # MODE: continuous
+               | (0b111 << 5)   # DR: fastest
+               | 0b00011)       # comparator disabled
+        self._write(self._REG_CONFIG, cfg)
+        if self._read(self._REG_CONFIG) & 0x7FFF != cfg & 0x7FFF:
+            raise RuntimeError("ADS1x15 antwortet nicht wie erwartet (Adresse 0x%02X)" % address)
+
+    def _write(self, reg, value):
+        self.bus.write_i2c_block_data(self.address, reg, [(value >> 8) & 0xFF, value & 0xFF])
+
+    def _read(self, reg):
+        hi, lo = self.bus.read_i2c_block_data(self.address, reg, 2)
+        return (hi << 8) | lo
+
+    def read(self):
+        raw = self._read(self._REG_CONV)
+        if raw & 0x8000:                             # two's complement
+            raw -= 0x10000
+        return raw * self._FS_VOLT / 32768.0
+
+    def describe(self):
+        return "ADS1x15 Kanal A%d, I2C 0x%02X" % (self.channel, self.address)
+
+    def close(self):
+        self.bus.close()
 
 
 class SimAdcReader:

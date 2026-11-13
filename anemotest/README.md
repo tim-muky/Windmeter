@@ -18,12 +18,17 @@ Unabhängig von SailMon und PiLogger. Nichts aus dem Hauptprojekt wird benötigt
 
 - Raspberry Pi Zero W (oder jeder andere Pi bis Pi 4; pigpio läuft nicht auf dem Pi 5)
 - Reedkontakt-Anemometer, zwei Adern
-- **optional** für die Signalstärke: MCP3008 (ADC, SPI) und ein 10 kΩ Widerstand
+- **optional** für die Signalstärke: ein ADC und ein 10 kΩ Widerstand. Unterstützt:
+  - **ADS1115-Modul** (auch ADS1015): fertiges Breakout-Board, I2C, 16 Bit, 860 Messungen/s.
+    Die übliche Wahl, wenn man ein Modul mit Stiftleiste kaufen will.
+  - **MCP3008**: nackter DIP-Chip für das Steckbrett, SPI, 10 Bit, mehrere tausend Messungen/s.
 
 Der Pi kann selbst keine Spannung messen, er sieht nur HIGH oder LOW. Ohne ADC
 sagt die Oberfläche deshalb nur: „Pulse werden erkannt, der Pegel reicht für den
-Logikeingang.“ Mit dem MCP3008 misst sie den Tiefpegel in Volt und rechnet den
-Kontaktwiderstand aus.
+Logikeingang.“ Mit ADC misst sie den Tiefpegel in Volt und rechnet den
+Kontaktwiderstand aus. Beide ADCs reichen dafür: bei Handdrehung ist der Kontakt
+einige zehn Millisekunden geschlossen, mit Fön noch etwa 5 ms, das sind beim
+ADS1115 immer noch mehrere Messungen pro Schließung.
 
 ### Verdrahtung Sensor (immer)
 
@@ -34,7 +39,25 @@ Kontaktwiderstand aus.
 
 Der interne Pull-up des Pi (ca. 50 kΩ) wird eingeschaltet. Polung egal.
 
-### Verdrahtung MCP3008 (optional, für die Signalstärke)
+### Verdrahtung ADS1115-Modul (optional, für die Signalstärke)
+
+| ADS1115 | Pi Zero W (Pin) |
+|---------|-----------------|
+| VDD | 3,3 V (Pin 1) |
+| GND | GND (Pin 6) |
+| SCL | GPIO 3 / SCL (Pin 5) |
+| SDA | GPIO 2 / SDA (Pin 3) |
+| ADDR | GND (ergibt Adresse 0x48) |
+| ALRT | frei lassen |
+| A0 | Sensorknoten (die Ader an GPIO 17) |
+| A1 bis A3 | frei lassen |
+
+Das Modul **nur mit 3,3 V** versorgen, nicht mit 5 V: die I2C-Leitungen und
+der Messbereich bleiben dann im Rahmen des Pi. Zusätzlich **10 kΩ von GPIO 17
+nach 3,3 V** legen, siehe unten. I2C muss eingeschaltet sein (`install.sh`
+erledigt das). Prüfen: `i2cdetect -y 1` zeigt `48`.
+
+### Verdrahtung MCP3008 (Alternative, nackter Chip)
 
 ```
                  ┌─────────────┐
@@ -63,6 +86,8 @@ passt direkt auf ein Steckbrett. Pinbelegung, Kerbe oben:
 | 7 | CH6 | 10 | CS |
 | 8 | CH7 | 9 | DGND |
 
+### Pull-up am Sensorknoten (für beide ADCs)
+
 „Sensorknoten“ ist die Ader, die an GPIO 17 hängt. Zusätzlich **10 kΩ von
 GPIO 17 nach 3,3 V** legen: damit ist der Pull-up bekannt (Standard
 `--pullup 10000`) und der Tiefpegel entspricht dem, was auch ein PiLogger-Eingang
@@ -77,9 +102,9 @@ cd ~/anemotest
 sudo bash install.sh
 ```
 
-Das Skript installiert `pigpio`, `python3-pigpio` und `python3-spidev`, startet
-den `pigpiod`-Dienst, schaltet SPI ein und richtet `anemotest.service` ein, der
-beim Booten automatisch startet.
+Das Skript installiert `pigpio`, `python3-pigpio`, `python3-smbus` und
+`python3-spidev`, startet den `pigpiod`-Dienst, schaltet I2C und SPI ein und
+richtet `anemotest.service` ein, der beim Booten automatisch startet.
 
 Web-Oberfläche: `http://<hostname>.local:8080` oder `http://<IP>:8080`
 (IP mit `hostname -I` nachsehen).
@@ -104,7 +129,8 @@ sudo systemctl restart anemotest`.
 | `--timeout` | Sekunden ohne Puls bis „NEIN“ | 3 |
 | `--factor` / `--unit` | Sensorkonstante, Einheit pro Puls/s | 1.44 km/h (PiLogger-Standard) |
 | `--pulses-per-rev` | Pulse pro Umdrehung für U/min | 1 |
-| `--adc` | `auto`, `none`, `mcp3008` | auto |
+| `--adc` | `auto`, `none`, `ads1115`, `mcp3008` (auto: erst ADS1115 auf I2C, dann MCP3008) | auto |
+| `--adc-address` | I2C-Adresse des ADS1115 | 0x48 |
 | `--pullup` | Pull-up am Sensorknoten in Ohm | 10000 |
 | `--port` | Port der Web-Oberfläche | 8080 |
 
@@ -142,8 +168,9 @@ zu viele Pulse. Abhilfe: 100 nF parallel zum Kontakt oder Sensor prüfen.
 |-------------------|---------|---------|
 | `pigpiod läuft nicht` | Dienst aus | `sudo systemctl enable --now pigpiod` |
 | `python3-pigpio fehlt` | Paket fehlt | `sudo apt install pigpio python3-pigpio` |
+| `ADS1115 nicht gefunden` | I2C aus, Modul nicht an 0x48 oder falsch verdrahtet | `sudo raspi-config nonint do_i2c 0`, `i2cdetect -y 1`, ADDR an GND |
 | ADC deaktiviert, kein `/dev/spidev0.0` | SPI aus | `sudo raspi-config nonint do_spi 0` und neu starten |
-| Ruhepegel ≈ 0 V trotz offenem Kontakt | MCP3008 falsch verdrahtet oder CH0 nicht am Sensorknoten | Verdrahtung oben prüfen |
+| Ruhepegel ≈ 0 V trotz offenem Kontakt | ADC-Eingang (A0 bzw. CH0) nicht am Sensorknoten | Verdrahtung oben prüfen |
 | Seite nicht erreichbar | Dienst läuft nicht oder falscher Port | `systemctl status anemotest`, `journalctl -u anemotest -f` |
 | `.local` wird nicht aufgelöst | mDNS fehlt auf dem Client | IP-Adresse verwenden |
 
@@ -153,7 +180,7 @@ zu viele Pulse. Abhilfe: 100 nF parallel zum Kontakt oder Sensor prüfen.
 |-------|--------|
 | `anemotest.py` | Start, Kommandozeile, Threads |
 | `pulse.py` | Pulsanalyse (Frequenz, Schließdauer, Prellen), pigpio-Anbindung, Simulation |
-| `adc.py` | MCP3008-Abfrage und Pegelauswertung |
+| `adc.py` | ADS1115/ADS1015- und MCP3008-Abfrage, Pegelauswertung |
 | `web.py` | HTTP-Server mit `/api/status`, `/api/history`, `/api/reset` |
 | `static/index.html` | Oberfläche, ohne externe Bibliotheken |
 | `anemotest.service`, `install.sh` | Autostart |

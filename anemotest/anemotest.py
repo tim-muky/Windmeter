@@ -7,7 +7,7 @@ das Ergebnis als Web-Oberfläche im lokalen Netz:
 
   • Signal vorhanden: ja / nein           (letzter Puls jünger als --timeout)
   • Frequenz in Hz, Pulse/min, U/min, daraus Windwert (--factor)
-  • Signalstärke (nur mit MCP3008-ADC): Ruhepegel, Tiefpegel, Kontaktwiderstand
+  • Signalstärke (mit ADC: ADS1115-Modul oder MCP3008): Ruhepegel, Tiefpegel, Kontaktwiderstand
   • Signalqualität: Schließdauer, Tastverhältnis, Prellen
 
 Verdrahtung: siehe README.md.  Start:
@@ -30,7 +30,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from pulse import PulseAnalyzer, PigpioSource, SimSource          # noqa: E402
-from adc import AdcMonitor, Mcp3008Reader, SimAdcReader           # noqa: E402
+from adc import AdcMonitor, Mcp3008Reader, Ads1x15Reader, SimAdcReader  # noqa: E402
 from web import App, make_server                                  # noqa: E402
 
 log = logging.getLogger("anemotest")
@@ -52,9 +52,12 @@ def parse_args(argv=None):
     g.add_argument("--pulses-per-rev", type=int, default=1,
                    help="Pulse pro Umdrehung für die U/min-Anzeige (Standard 1)")
     a = p.add_argument_group("ADC (Signalstärke)")
-    a.add_argument("--adc", choices=("auto", "none", "mcp3008"), default="auto",
-                   help="auto: MCP3008 verwenden, wenn /dev/spidev0.0 existiert")
-    a.add_argument("--adc-channel", type=int, default=0, help="MCP3008-Kanal (Standard 0)")
+    a.add_argument("--adc", choices=("auto", "none", "mcp3008", "ads1115"), default="auto",
+                   help="auto: ADS1115/ADS1015 auf I2C suchen, sonst MCP3008, wenn "
+                        "/dev/spidev0.0 existiert")
+    a.add_argument("--adc-channel", type=int, default=0, help="ADC-Kanal (Standard 0)")
+    a.add_argument("--adc-address", type=lambda s: int(s, 0), default=0x48,
+                   help="I2C-Adresse des ADS1115 (Standard 0x48 = ADDR an GND)")
     a.add_argument("--pullup", type=float, default=10_000.0,
                    help="Pull-up-Widerstand am Sensorknoten in Ohm (Standard 10000)")
     a.add_argument("--vref", type=float, default=3.3, help="ADC-Referenzspannung (Standard 3.3)")
@@ -73,17 +76,32 @@ def build_adc(args, source):
                           pullup_ohm=args.pullup, vref=args.vref)
     if args.adc == "none":
         return None
-    if args.adc == "auto" and not os.path.exists("/dev/spidev0.0"):
-        log.info("Kein /dev/spidev0.0 – ADC deaktiviert (SPI einschalten: "
-                 "sudo raspi-config nonint do_spi 0)")
-        return None
-    try:
-        reader = Mcp3008Reader(channel=args.adc_channel, vref=args.vref)
-        reader.read()
-    except Exception as exc:
-        if args.adc == "mcp3008":
-            raise SystemExit(f"ADC-Fehler: {exc}  (python3-spidev installiert? SPI aktiv?)")
-        log.warning("ADC nicht nutzbar (%s) – Signalstärke wird nicht gemessen", exc)
+
+    def try_reader(make, name, required):
+        try:
+            reader = make()
+            reader.read()
+            return reader
+        except Exception as exc:
+            if required:
+                raise SystemExit(f"ADC-Fehler ({name}): {exc}")
+            log.info("%s nicht gefunden (%s)", name, exc)
+            return None
+
+    reader = None
+    if args.adc in ("auto", "ads1115") and (args.adc == "ads1115" or os.path.exists("/dev/i2c-1")):
+        reader = try_reader(lambda: Ads1x15Reader(address=args.adc_address,
+                                                  channel=args.adc_channel, vref=args.vref),
+                            "ADS1115", required=(args.adc == "ads1115"))
+    if reader is None and args.adc in ("auto", "mcp3008"):
+        if args.adc == "mcp3008" or os.path.exists("/dev/spidev0.0"):
+            reader = try_reader(lambda: Mcp3008Reader(channel=args.adc_channel, vref=args.vref),
+                                "MCP3008", required=(args.adc == "mcp3008"))
+        else:
+            log.info("Kein /dev/spidev0.0 – MCP3008 übersprungen")
+    if reader is None:
+        log.info("Kein ADC – Signalstärke wird nicht in Volt gemessen "
+                 "(I2C/SPI einschalten: sudo raspi-config nonint do_i2c 0 / do_spi 0)")
         return None
     return AdcMonitor(reader, pullup_ohm=args.pullup, vref=args.vref)
 
