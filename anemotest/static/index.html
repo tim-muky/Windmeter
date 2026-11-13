@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anemometer-Tester</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --page: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --muted: #898781;
+    --grid: #2c2c2a; --axis: #383835; --ring: rgba(255,255,255,0.10);
+    --series-1: #3987e5; --series-2: #d95926;
+    --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      color-scheme: light;
+      --page: #f9f9f7; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --muted: #898781;
+      --grid: #e1e0d9; --axis: #c3c2b7; --ring: rgba(11,11,11,0.10);
+      --series-1: #2a78d6; --series-2: #eb6834;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink);
+         font: 15px/1.4 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+           padding: 14px 18px 6px; }
+  header h1 { font-size: 18px; margin: 0; font-weight: 600; }
+  header .src { color: var(--muted); font-size: 13px; }
+  #conn { margin-left: auto; font-size: 13px; color: var(--critical); display: none; }
+  main { display: grid; gap: 12px; padding: 8px 12px 12px;
+         grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .card { background: var(--surface); border: 1px solid var(--ring); border-radius: 10px;
+          padding: 12px 14px; min-width: 0; }
+  .card h2 { margin: 0 0 6px; font-size: 12px; font-weight: 600; letter-spacing: .04em;
+             text-transform: uppercase; color: var(--muted); }
+  .wide { grid-column: 1 / -1; }
+  .hero { display: flex; align-items: baseline; gap: 8px; line-height: 1; margin: 4px 0 8px; }
+  .hero .num { font-size: 48px; font-weight: 600; }
+  .hero .unit { font-size: 16px; color: var(--ink-2); }
+  .hero .dot { width: 18px; height: 18px; border-radius: 50%; align-self: center;
+               background: var(--muted); flex: none; }
+  dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 0; font-size: 14px; }
+  dt { color: var(--ink-2); } dd { margin: 0; font-variant-numeric: tabular-nums; }
+  .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+  .badge::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: currentColor; }
+  .lvl-good { color: var(--good); } .lvl-warning { color: var(--warning); }
+  .lvl-serious { color: var(--serious); } .lvl-critical { color: var(--critical); }
+  .lvl-none { color: var(--muted); }
+  .meter { position: relative; height: 14px; border-radius: 4px; margin: 10px 0 18px; overflow: visible;
+           background: linear-gradient(90deg, var(--good) 0 12%, var(--warning) 12% 24%,
+                       var(--serious) 24% 45%, var(--critical) 45% 100%); opacity: .95; }
+  .meter .mark { position: absolute; top: -5px; width: 4px; height: 24px; background: var(--ink);
+                 border-radius: 2px; transform: translateX(-2px); transition: left .3s; }
+  .meter .mark.avg { background: var(--ink-2); height: 18px; top: -2px; }
+  .meter .tick { position: absolute; top: 16px; font-size: 11px; color: var(--muted); transform: translateX(-50%); }
+  .note { font-size: 13px; color: var(--ink-2); margin-top: 6px; }
+  canvas { width: 100%; height: 190px; display: block; touch-action: none; }
+  .tip { position: absolute; pointer-events: none; background: var(--surface); color: var(--ink);
+         border: 1px solid var(--ring); border-radius: 6px; padding: 4px 8px; font-size: 12px;
+         white-space: nowrap; display: none; z-index: 2; }
+  .chart-wrap { position: relative; }
+  details summary { cursor: pointer; color: var(--ink-2); }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; margin-top: 8px; }
+  th, td { text-align: right; padding: 3px 8px; border-bottom: 1px solid var(--grid);
+           font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; }
+  footer { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center;
+           padding: 4px 18px 18px; color: var(--muted); font-size: 13px; }
+  button { background: transparent; color: var(--ink-2); border: 1px solid var(--ring);
+           border-radius: 6px; padding: 5px 10px; font: inherit; cursor: pointer; }
+  button:hover { color: var(--ink); border-color: var(--ink-2); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Anemometer-Tester</h1>
+  <span class="src" id="src">–</span>
+  <span id="conn">● keine Verbindung zum Pi</span>
+</header>
+
+<main>
+  <section class="card">
+    <h2>Signal</h2>
+    <div class="hero"><span class="dot" id="sig-dot"></span><span class="num" id="sig">–</span></div>
+    <dl>
+      <dt>Letzter Puls</dt><dd id="age">–</dd>
+      <dt>Eingangspegel</dt><dd id="level">–</dd>
+      <dt>Pulse gesamt</dt><dd id="total">0</dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Frequenz</h2>
+    <div class="hero"><span class="num" id="freq">0.00</span><span class="unit">Hz</span></div>
+    <dl>
+      <dt>Pulse/min</dt><dd id="ppm">0</dd>
+      <dt>Umdrehungen/min</dt><dd id="rpm">0</dd>
+      <dt>≙ Wind</dt><dd><span id="wind">0.0</span> <span id="wind-unit"></span></dd>
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>Signalstärke</h2>
+    <div id="adc-on" style="display:none">
+      <div class="hero"><span class="num" id="vlow">–</span><span class="unit">V Tiefpegel</span></div>
+      <div class="badge" id="grade">–</div>
+      <div class="meter" id="meter">
+        <div class="mark avg" id="m-avg" style="left:0"></div>
+        <div class="mark" id="m-worst" style="left:0"></div>
+        <span class="tick" style="left:12%">0,4</span>
+        <span class="tick" style="left:24%">0,8</span>
+        <span class="tick" style="left:45%">1,5</span>
+        <span class="tick" style="left:100%">V</span>
+      </div>
+      <dl>
+        <dt>Ruhepegel</dt><dd><span id="vidle">–</span> V</dd>
+        <dt>Tiefpegel ⌀ / max</dt><dd><span id="vavg">–</span> / <span id="vworst">–</span> V</dd>
+        <dt>Kontaktwiderstand</dt><dd id="rcontact">–</dd>
+        <dt>Schließungen</dt><dd id="closures">0</dd>
+      </dl>
+      <div class="note" id="idle-note"></div>
+    </div>
+    <div id="adc-off">
+      <div class="badge" id="grade-noadc">–</div>
+      <div class="note">Kein ADC angeschlossen. Der Pi erkennt einen Puls nur, wenn der Pegel
+        unter etwa 0,8 V fällt. Werden Pulse gezählt, reicht das Signal also für
+        den Logikeingang. Für Volt-Werte und Kontaktwiderstand einen MCP3008
+        anschließen (siehe README).</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Signalqualität</h2>
+    <div class="badge" id="quality">–</div>
+    <dl style="margin-top:8px">
+      <dt>Schließdauer min / ⌀ / max</dt><dd id="low">–</dd>
+      <dt>Tastverhältnis</dt><dd id="duty">–</dd>
+      <dt>Prellen (60 s)</dt><dd id="bounce">–</dd>
+      <dt>Prellflanken gesamt</dt><dd id="glitches">0</dd>
+    </dl>
+  </section>
+
+  <section class="card wide">
+    <h2>Frequenz in Hz, letzte 5 Minuten</h2>
+    <div class="chart-wrap"><canvas id="chart-f"></canvas><div class="tip" id="tip-f"></div></div>
+  </section>
+
+  <section class="card wide" id="card-v" style="display:none">
+    <h2>Tiefpegel je Schließung in V, letzte 5 Minuten</h2>
+    <div class="chart-wrap"><canvas id="chart-v"></canvas><div class="tip" id="tip-v"></div></div>
+  </section>
+
+  <details class="card wide">
+    <summary>Messwerte als Tabelle (letzte 30 Sekunden)</summary>
+    <table id="tbl"><thead><tr><th>Zeit</th><th>Hz</th><th>Signal</th><th>Tiefpegel V</th></tr></thead><tbody></tbody></table>
+  </details>
+</main>
+
+<footer>
+  <span id="cfg">–</span>
+  <span id="rate"></span>
+  <button id="reset">Zähler zurücksetzen</button>
+</footer>
+
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const fmt = (v, d = 1) => (v === null || v === undefined) ? '–' : v.toFixed(d).replace('.', ',');
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+  function setBadge(el, level, text) {
+    el.className = 'badge lvl-' + (level || 'none');
+    el.textContent = text || '–';
+  }
+
+  // ── status ──────────────────────────────────────────────────────────────
+  let lastStatus = null;
+  async function pollStatus() {
+    try {
+      const s = await (await fetch('/api/status', { cache: 'no-store' })).json();
+      $('conn').style.display = 'none';
+      lastStatus = s;
+      render(s);
+    } catch (e) {
+      $('conn').style.display = 'inline';
+    }
+  }
+
+  function render(s) {
+    $('src').textContent = s.source + (s.adc.available ? ' · ' + s.adc.reader : '');
+    $('sig').textContent = s.present ? 'JA' : 'NEIN';
+    $('sig-dot').style.background = s.present ? css('--good') : css('--critical');
+    $('age').textContent = s.age_s === null ? 'noch keiner' : 'vor ' + fmt(s.age_s) + ' s';
+    $('level').textContent = s.level + (s.level === 'LOW' ? ' (Kontakt geschlossen)' : s.level === 'HIGH' ? ' (offen)' : '');
+    $('total').textContent = s.total_pulses;
+
+    $('freq').textContent = fmt(s.freq_hz, 2);
+    $('ppm').textContent = fmt(s.pulses_per_min, 0);
+    $('rpm').textContent = fmt(s.rpm, 0);
+    $('wind').textContent = fmt(s.wind, 1);
+    $('wind-unit').textContent = s.wind_unit;
+
+    const q = s.quality; setBadge($('quality'), q.level, q.text);
+    const l = s.low_ms;
+    $('low').textContent = l.avg === null ? '–' : fmt(l.min) + ' / ' + fmt(l.avg) + ' / ' + fmt(l.max) + ' ms';
+    $('duty').textContent = s.duty_pct === null ? '–' : fmt(s.duty_pct, 0) + ' %';
+    $('bounce').textContent = fmt(s.bounce_pct) + ' %';
+    $('glitches').textContent = s.total_glitches;
+
+    const a = s.adc;
+    $('adc-on').style.display = a.available ? '' : 'none';
+    $('adc-off').style.display = a.available ? 'none' : '';
+    $('card-v').style.display = a.available ? '' : 'none';
+    if (a.available) {
+      $('vlow').textContent = fmt(a.v_low_last, 2);
+      setBadge($('grade'), a.grade.level, a.grade.text);
+      $('vidle').textContent = fmt(a.v_idle, 2);
+      $('vavg').textContent = fmt(a.v_low_avg, 2);
+      $('vworst').textContent = fmt(a.v_low_worst, 2);
+      $('rcontact').textContent = a.r_contact_ohm === null ? '–' :
+        (a.r_contact_ohm >= 1000 ? fmt(a.r_contact_ohm / 1000, 1) + ' kΩ' : a.r_contact_ohm + ' Ω');
+      $('closures').textContent = a.closures;
+      $('idle-note').textContent = a.idle_note || '';
+      const span = Math.max(a.v_idle || 3.3, 0.1);
+      const pos = v => Math.min(100, Math.max(0, 100 * v / span)) + '%';
+      $('m-worst').style.left = pos(a.v_low_worst || 0);
+      $('m-avg').style.left = pos(a.v_low_avg || 0);
+      $('rate').textContent = 'ADC ' + a.samples_per_s + ' Messungen/s · Pull-up ' + fmt(a.pullup_ohm / 1000, 0) + ' kΩ';
+    } else {
+      setBadge($('grade-noadc'), s.present ? 'good' : (s.total_pulses ? 'warning' : 'none'),
+        s.present ? 'Pegel erreicht Logikschwelle (Pulse werden erkannt)'
+                  : (s.total_pulses ? 'zuletzt erkannt, jetzt kein Signal' : 'noch nicht bewertbar'));
+      $('rate').textContent = '';
+    }
+    const c = s.config;
+    $('cfg').textContent = 'GPIO ' + s.meta.gpio + ' · Entprellung ' + fmt(c.debounce_ms, 0) + ' ms · Timeout ' +
+      fmt(c.timeout_s, 0) + ' s · Konstante ' + c.factor + ' ' + c.unit + ' je Hz · ' + c.pulses_per_rev +
+      ' Puls/Umdr. · Laufzeit ' + Math.floor(s.uptime_s / 60) + ' min';
+  }
+
+  // ── history + charts ────────────────────────────────────────────────────
+  let history = [];
+  async function pollHistory() {
+    try {
+      history = await (await fetch('/api/history', { cache: 'no-store' })).json();
+      drawAll();
+      fillTable();
+    } catch (e) { /* conn indicator handled by status poll */ }
+  }
+
+  function fillTable() {
+    const tb = $('tbl').querySelector('tbody');
+    const rows = history.slice(-30).reverse();
+    tb.innerHTML = rows.map(r => '<tr><td>' + new Date(r.t * 1000).toLocaleTimeString('de-DE') +
+      '</td><td>' + fmt(r.f, 2) + '</td><td>' + (r.p ? 'ja' : 'nein') + '</td><td>' +
+      (r.v === null ? '–' : fmt(r.v, 2)) + '</td></tr>').join('');
+  }
+
+  const charts = [
+    { canvas: $('chart-f'), tip: $('tip-f'), key: 'f', color: '--series-1', unit: 'Hz', dec: 2, minMax: 2 },
+    { canvas: $('chart-v'), tip: $('tip-v'), key: 'v', color: '--series-2', unit: 'V', dec: 2, minMax: 1 },
+  ];
+  const WINDOW = 300;
+  let hover = null;
+
+  function drawAll() { charts.forEach(drawChart); }
+
+  function drawChart(ch) {
+    const cv = ch.canvas;
+    if (cv.offsetParent === null) return;
+    const dpr = window.devicePixelRatio || 1;
+    const W = cv.clientWidth, H = cv.clientHeight;
+    if (cv.width !== W * dpr || cv.height !== H * dpr) { cv.width = W * dpr; cv.height = H * dpr; }
+    const ctx = cv.getContext('2d');
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    const pad = { l: 42, r: 14, t: 10, b: 22 };
+    const now = Date.now() / 1000;
+    const pts = history.filter(r => r[ch.key] !== null && r[ch.key] !== undefined && now - r.t <= WINDOW);
+    let yMax = ch.minMax;
+    pts.forEach(p => { if (p[ch.key] > yMax) yMax = p[ch.key]; });
+    yMax = niceCeil(yMax);
+    const x = t => pad.l + (W - pad.l - pad.r) * (1 - (now - t) / WINDOW);
+    const y = v => pad.t + (H - pad.t - pad.b) * (1 - v / yMax);
+
+    ctx.font = '11px system-ui, sans-serif';
+    ctx.fillStyle = css('--muted');
+    ctx.strokeStyle = css('--grid'); ctx.lineWidth = 1;
+    const steps = 4;
+    for (let i = 0; i <= steps; i++) {
+      const v = yMax * i / steps, yy = Math.round(y(v)) + .5;
+      ctx.beginPath(); ctx.moveTo(pad.l, yy); ctx.lineTo(W - pad.r, yy); ctx.stroke();
+      ctx.textAlign = 'right'; ctx.fillText(fmt(v, ch.dec > 1 && yMax < 5 ? 1 : 0), pad.l - 6, yy + 4);
+    }
+    ctx.strokeStyle = css('--axis');
+    ctx.beginPath(); ctx.moveTo(pad.l, Math.round(y(0)) + .5); ctx.lineTo(W - pad.r, Math.round(y(0)) + .5); ctx.stroke();
+    ctx.textAlign = 'center';
+    [-300, -240, -180, -120, -60, 0].forEach(s => ctx.fillText(s === 0 ? 'jetzt' : (s / 60) + ' min', x(now + s), H - 6));
+
+    if (pts.length) {
+      ctx.strokeStyle = css(ch.color); ctx.lineWidth = 2; ctx.lineJoin = 'round';
+      ctx.beginPath();
+      pts.forEach((p, i) => { const px = x(p.t), py = y(p[ch.key]); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
+      ctx.stroke();
+      const last = pts[pts.length - 1];
+      ctx.fillStyle = css('--ink'); ctx.textAlign = 'right';
+      ctx.fillText(fmt(last[ch.key], ch.dec) + ' ' + ch.unit, W - pad.r, Math.max(pad.t + 10, y(last[ch.key]) - 8));
+    }
+
+    if (hover && hover.ch === ch && pts.length) {
+      let best = pts[0];
+      pts.forEach(p => { if (Math.abs(x(p.t) - hover.x) < Math.abs(x(best.t) - hover.x)) best = p; });
+      const px = x(best.t), py = y(best[ch.key]);
+      ctx.strokeStyle = css('--axis'); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(px + .5, pad.t); ctx.lineTo(px + .5, H - pad.b); ctx.stroke();
+      ctx.fillStyle = css(ch.color); ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = css('--surface'); ctx.lineWidth = 2; ctx.stroke();
+      ch.tip.style.display = 'block';
+      ch.tip.textContent = new Date(best.t * 1000).toLocaleTimeString('de-DE') + ' · ' + fmt(best[ch.key], ch.dec) + ' ' + ch.unit;
+      ch.tip.style.left = Math.min(px + 10, W - ch.tip.offsetWidth - 4) + 'px';
+      ch.tip.style.top = Math.max(0, py - 30) + 'px';
+    } else {
+      ch.tip.style.display = 'none';
+    }
+  }
+
+  function niceCeil(v) {
+    if (v <= 0) return 1;
+    const p = Math.pow(10, Math.floor(Math.log10(v)));
+    for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= v) return m * p;
+    return 10 * p;
+  }
+
+  charts.forEach(ch => {
+    const move = e => {
+      const r = ch.canvas.getBoundingClientRect();
+      const cx = (e.touches ? e.touches[0].clientX : e.clientX) - r.left;
+      hover = { ch, x: cx }; drawChart(ch);
+    };
+    ch.canvas.addEventListener('mousemove', move);
+    ch.canvas.addEventListener('touchstart', move, { passive: true });
+    ch.canvas.addEventListener('touchmove', move, { passive: true });
+    ch.canvas.addEventListener('mouseleave', () => { hover = null; drawChart(ch); });
+    ch.canvas.addEventListener('touchend', () => { hover = null; drawChart(ch); });
+  });
+  window.addEventListener('resize', drawAll);
+
+  $('reset').addEventListener('click', async () => {
+    await fetch('/api/reset', { method: 'POST' });
+    history = []; drawAll(); fillTable(); pollStatus();
+  });
+
+  pollStatus(); pollHistory();
+  setInterval(pollStatus, 500);
+  setInterval(pollHistory, 2000);
+})();
+</script>
+</body>
+</html>

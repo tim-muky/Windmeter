@@ -1,0 +1,16 @@
+[Unit]
+Description=anemotest – Anemometer-Tester mit Web-UI
+After=network.target pigpiod.service
+Wants=pigpiod.service
+
+[Service]
+Type=simple
+User=__USER__
+WorkingDirectory=__DIR__
+ExecStart=/usr/bin/python3 __DIR__/anemotest.py --gpio 17 --adc auto --port 8080
+Restart=on-failure
+RestartSec=3
+SupplementaryGroups=gpio spi
+
+[Install]
+WantedBy=multi-user.target
