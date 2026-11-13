@@ -172,6 +172,46 @@ geschlossen bleibt, bei Handdrehung einige zehn Millisekunden. Werte unter 1 ms
 sind Prellen. Liegt der Prellanteil über 10 %, zählt ein nachgeschalteter Logger
 zu viele Pulse. Abhilfe: 100 nF parallel zum Kontakt oder Sensor prüfen.
 
+## Testablauf: erst Sensor, dann langes Kabel
+
+**A. Funktioniert der Windmesser?** Sensor mit kurzem Kabel anschließen,
+Schalen von Hand drehen.
+
+- Signal springt auf JA, Frequenz folgt der Drehung.
+- „Pulse gesamt“ pro Umdrehung zählen: das ist der Wert für `--pulses-per-rev`.
+- Signalqualität „sauber“ oder „leichtes Prellen“. Starkes Prellen notieren.
+- Mit ADC: Tiefpegel unter 0,4 V, Kontaktwiderstand unter 1 Ω, Ruhepegel ≈ 3,3 V.
+- Sensor stillhalten: „Pulse gesamt“ darf nicht weiterzählen.
+
+Diese Werte sind die Referenz. Mit „Zähler zurücksetzen“ vor Schritt B neu beginnen.
+
+**B. Reicht das Signal über das Bordkabel (8 bis 10 m)?** Möglichst das
+echte Kabel mit den echten Steckern einschleifen, nicht ein neues Stück:
+die Stecker sind die übliche Schwachstelle, nicht die Länge.
+
+Was 10 m Kabel physikalisch ausmachen: Der Kupferwiderstand liegt selbst bei
+dünnem Kabel (0,14 mm²) unter 3 Ω für Hin- und Rückleiter, also bei einem
+Tiefpegel von wenigen Millivolt. Die Kabelkapazität (etwa 1 nF) ergibt mit
+10 kΩ Pull-up eine Anstiegszeit von 10 µs, bei Pulsen von Millisekunden ohne
+Bedeutung. Die Länge allein kann das Signal nicht schwach machen. Wenn es mit
+dem langen Kabel schlechter wird, liegt es an Steckern, Korrosion, Feuchtigkeit
+oder Störungen, und genau das zeigt der Vergleich:
+
+| Wert | kurz vs. lang | Bedeutung bei Verschlechterung |
+|------|---------------|--------------------------------|
+| Kontaktwiderstand | sollte gleich bleiben | Stecker, Klemme, Korrosion im Kabelweg |
+| Tiefpegel | sollte gleich bleiben | dito, wird mit dem Kontaktwiderstand sichtbar |
+| Ruhepegel | sollte 3,3 V bleiben | sinkt er, fließt Leckstrom: Feuchtigkeit im Stecker oder Kabel |
+| Prellen / Prellflanken | sollte gleich bleiben | Wackelkontakt im Kabelweg oder Störeinkopplung |
+| Pulse bei stehendem Sensor | muss 0 bleiben | Störungen von Zündung, Ladegerät, Funk |
+
+Während der Messung Kabel und Stecker bewegen und die Anzeige beobachten. Ein
+Sprung im Kontaktwiderstand oder plötzliche Prellflanken zeigen die Stelle.
+
+Strenger testen: Pull-up auf 4,7 kΩ verkleinern (`--pullup 4700`). Derselbe
+Kontaktwiderstand erzeugt dann einen höheren Tiefpegel, der Test hat also
+weniger Reserve als der spätere PiLogger-Eingang und ist auf der sicheren Seite.
+
 ## Fehlersuche
 
 | Meldung / Symptom | Ursache | Abhilfe |
