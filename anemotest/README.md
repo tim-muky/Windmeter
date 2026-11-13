@@ -30,6 +30,16 @@ Kontaktwiderstand aus. Beide ADCs reichen dafür: bei Handdrehung ist der Kontak
 einige zehn Millisekunden geschlossen, mit Fön noch etwa 5 ms, das sind beim
 ADS1115 immer noch mehrere Messungen pro Schließung.
 
+### Verdrahtungspläne
+
+Minimal (nur Anemometer, reicht für Signal ja/nein, Frequenz und Qualität):
+
+![Verdrahtung minimal](docs/wiring_minimal.svg)
+
+Mit Signalstärke (Anemometer, 10-kΩ-Pull-up und ADS1115-Modul):
+
+![Verdrahtung mit ADS1115](docs/wiring_ads1115.svg)
+
 ### Verdrahtung Sensor (immer)
 
 | Anemometer | Pi Zero W (Pin) |
