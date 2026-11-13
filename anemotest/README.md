@@ -104,6 +104,48 @@ GPIO 17 nach 3,3 V** legen: damit ist der Pull-up bekannt (Standard
 sehen würde. Ohne den Widerstand liefert der ADC trotzdem Werte, aber der
 errechnete Kontaktwiderstand stimmt dann nicht.
 
+## Einkaufsliste
+
+Preise sind grobe Richtwerte (Stand Ende 2026, deutsche Händler wie Berrybase,
+Reichelt, Rasppishop, Amazon). Was schon vorhanden ist, entfällt.
+
+**Stufe 1: Minimalaufbau** (Signal ja/nein, Frequenz, Qualität)
+
+| Teil | Menge | Wozu | ca. |
+|------|-------|------|-----|
+| Raspberry Pi Zero 2 WH (oder Zero WH), „H“ = Stiftleiste schon verlötet | 1 | Rechner. Der Zero 2 ist schneller bei gleichem Pinout, pigpio läuft auf beiden | 18–25 € |
+| microSD 16 GB, Class 10 / A1 | 1 | Raspberry Pi OS Lite | 5–8 € |
+| Netzteil 5 V Micro-USB, mindestens 1 A | 1 | Stromversorgung | 8–10 € |
+| Steckbrett 400 Kontakte | 1 | Knotenpunkt, Widerstand, Modul | 3–5 € |
+| Jumperkabel-Set Buchse–Stecker und Buchse–Buchse, 20 cm | 1 Set | Pi ↔ Steckbrett ↔ Modul | 4–6 € |
+| Schraubklemmen-Adapter fürs Steckbrett (2-polig) oder 2 × Wago 221 | 1–2 | Sensorkabel ohne Löten anschließen | 2–5 € |
+| Gehäuse für den Zero (optional) | 1 | Schutz auf dem Werkstatttisch | 5–8 € |
+
+**Stufe 2: Signalstärke** (zusätzlich)
+
+| Teil | Menge | Wozu | ca. |
+|------|-------|------|-----|
+| ADS1115-Modul (ADS1015 geht auch), möglichst mit verlöteter Stiftleiste | 1 | ADC für Tiefpegel, Ruhepegel, Kontaktwiderstand | 5–10 € |
+| Widerstand 10 kΩ, 1/4 W | 2 | Pull-up am Sensorknoten | Cent |
+| Widerstand 4,7 kΩ, 1/4 W | 2 | strengerer Test | Cent |
+| Kondensator 100 nF keramisch | 2 | nur falls der Kontakt stark prellt | Cent |
+
+Widerstände gibt es einzeln kaum; ein E12-Sortiment für etwa 5 € deckt alles ab.
+Kommt das ADS1115-Modul ohne verlötete Stiftleiste, braucht es einen Lötkolben
+für zehn Pins.
+
+**Für den Kabeltest:** das Bordkabel mit den Originalsteckern, dazu vier Wago 221
+oder Lüsterklemmen zum Einschleifen.
+
+**Werkzeug, vermutlich vorhanden:** Multimeter, Abisolierzange oder
+Seitenschneider, PC mit Raspberry Pi Imager (WLAN und SSH werden beim Schreiben
+der Karte eingetragen, Monitor und Tastatur sind nicht nötig).
+
+**Nicht nötig:** Monitor, Tastatur, MCP3008 (wenn das ADS1115-Modul genommen
+wird), der PICO aus dem Hauptprojekt.
+
+Summe: Stufe 1 etwa 40 bis 60 €, mit Stufe 2 etwa 10 bis 20 € mehr.
+
 ## Installation
 
 ```bash
