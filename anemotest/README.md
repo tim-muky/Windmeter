@@ -62,6 +62,10 @@ Der interne Pull-up des Pi (ca. 50 kΩ) wird eingeschaltet. Polung egal.
 | A0 | Sensorknoten (die Ader an GPIO 17) |
 | A1 bis A3 | frei lassen |
 
+So sieht das Modul von oben aus, mit der Zuordnung zum Pi:
+
+![ADS1115-Modul Pins](docs/ads1115_module.svg)
+
 Das Modul **nur mit 3,3 V** versorgen, nicht mit 5 V: die I2C-Leitungen und
 der Messbereich bleiben dann im Rahmen des Pi. Zusätzlich **10 kΩ von GPIO 17
 nach 3,3 V** legen, siehe unten. I2C muss eingeschaltet sein (`install.sh`
