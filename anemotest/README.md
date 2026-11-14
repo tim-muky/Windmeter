@@ -337,6 +337,7 @@ weniger Reserve als der spätere PiLogger-Eingang und ist auf der sicheren Seite
 
 | Meldung / Symptom | Ursache | Abhilfe |
 |-------------------|---------|---------|
+| Seite lädt, aber beim Drehen passiert nichts | Sensor nicht an BCM-GPIO 17 (physischer **Pin 11**, nicht Pin 17), Ader hat keinen Kontakt im Steckbrett, oder der Reedkontakt schließt nicht | siehe „Keine Pulse“ unten |
 | `pigpiod läuft nicht` | Dienst aus | `sudo systemctl enable --now pigpiod` |
 | `python3-pigpio fehlt` | Paket fehlt | `sudo apt install pigpio python3-pigpio` |
 | `ADS1115 nicht gefunden` | I2C aus, Modul nicht an 0x48 oder falsch verdrahtet | `sudo raspi-config nonint do_i2c 0`, `i2cdetect -y 1`, ADDR an GND |
@@ -344,6 +345,40 @@ weniger Reserve als der spätere PiLogger-Eingang und ist auf der sicheren Seite
 | Ruhepegel ≈ 0 V trotz offenem Kontakt | ADC-Eingang (A0 bzw. CH0) nicht am Sensorknoten | Verdrahtung oben prüfen |
 | Seite nicht erreichbar | Dienst läuft nicht oder falscher Port | `systemctl status anemotest`, `journalctl -u anemotest -f` |
 | `.local` wird nicht aufgelöst | mDNS fehlt auf dem Client | IP-Adresse verwenden |
+
+### Keine Pulse beim Drehen
+
+Drei Tests, jeder dauert eine Minute:
+
+1. **Pegel live ansehen.** Die Karte „Signal“ zeigt den Eingangspegel. Sensor
+   langsam drehen und dabei zusehen: Der Pegel muss zwischen HIGH und LOW
+   wechseln. Dasselbe auf der Kommandozeile des Pi, Ausgabe 1 = HIGH (offen),
+   0 = LOW (geschlossen):
+
+   ```bash
+   watch -n 0.2 pigs r 17
+   ```
+
+2. **Drahtbrücke statt Sensor.** Sensor abziehen, mit einem Jumper Pin 11 kurz
+   gegen Pin 9 tippen. Zählt das Dashboard jetzt Pulse, sind Pi und Software in
+   Ordnung, das Problem liegt beim Sensor oder seinen Anschlüssen.
+3. **Sensor mit dem Multimeter.** Ohm-Bereich an die beiden Adern, drehen: muss
+   zwischen „OL“ und unter 10 Ω wechseln. Tut er das, aber Test 1 schlägt fehl,
+   haben die Adern keinen Kontakt im Steckbrett. Dünne Litze hält dort schlecht,
+   Enden verzinnen oder Schraubklemme/Wago verwenden.
+
+Häufigster Fehler: **Pin 11 und Pin 17 verwechselt.** Der Sensor gehört an
+BCM-GPIO 17, das ist der physische Pin 11 (sechster Pin von der Ecke in der
+inneren Reihe). Physischer Pin 17 führt 3,3 V. Dort angeschlossen schließt der
+Reedkontakt 3,3 V gegen GND kurz, der Pi bricht zusammen.
+
+### Update einspielen
+
+```bash
+cd ~/Windmeter && git pull
+cp -r ~/Windmeter/anemotest/* ~/anemotest/
+sudo systemctl restart anemotest
+```
 
 ## Dateien
 

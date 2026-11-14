@@ -32,6 +32,13 @@ class App:
 
     def status(self):
         s = self.analyzer.snapshot()
+        # live input level from the source (edge-based level is unknown until
+        # the first edge, and stale if the contact stays closed)
+        try:
+            closed = self.source.contact_closed
+            s["level"] = "LOW" if closed else "HIGH"
+        except Exception:
+            pass
         s["adc"] = self.adc.snapshot() if self.adc else {"available": False}
         s["source"] = self.source.describe()
         s["meta"] = self.meta
