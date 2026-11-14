@@ -333,6 +333,24 @@ Strenger testen: Pull-up auf 4,7 kΩ verkleinern (`--pullup 4700`). Derselbe
 Kontaktwiderstand erzeugt dann einen höheren Tiefpegel, der Test hat also
 weniger Reserve als der spätere PiLogger-Eingang und ist auf der sicheren Seite.
 
+## Sensorkonstante: Beispiel BSC Windsensor WGM
+
+Der im Boot verbaute Geber ist ein **BSC Windsensor WGM** (BSC Technology,
+Naila; Händler z. B. windowdrives.com). Laut Datenblatt: Reedkontakt, zwei
+Adern, 0 bis 50 m/s, Anlauf 1 m/s, linear, **2 Impulse pro Sekunde je 1 m/s**,
+Kontakt max. 0,5 A / 10 W, IP65, Schalenkreuz 120 mm.
+
+Daraus folgt: 1 Hz = 0,5 m/s = 1,8 km/h. Für den Tester:
+
+```bash
+python3 anemotest.py --factor 1.8 --unit km/h
+```
+
+und im PiLogger-WebMonitor „Faktor Pulse 1“ = 1,8 bei Einheit km/h (oder 0,5 bei
+m/s). Die Pulse pro Umdrehung zeigt der Tester beim langsamen Drehen; laut
+Forum liefert der WGM je nach Magnetlage ein oder zwei pro Umdrehung, für die
+Umrechnung ist das egal, weil das Datenblatt direkt Hz je m/s angibt.
+
 ## Fehlersuche
 
 | Meldung / Symptom | Ursache | Abhilfe |
